@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Lab - Evaporative Cooling & Latent Heat</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0f1d;
+            --panel-bg: #131c31;
+            --panel-card: #1d2946;
+            --text-light: #f1f5f9;
+            --text-muted: #94a3b8;
+            --stc-yellow: #facc15;
+            --stc-cyan: #22d3ee;
+            --stc-orange: #f97316;
+            --stc-red: #ef4444;
+            --stc-blue: #3b82f6;
+            --stc-green: #10b981;
+            --stc-purple: #c084fc;
+            --border-ui: #2e3d60;
+            --glow-color: rgba(34, 211, 238, 0.2);
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.8),
+                        0 0 40px 0 rgba(34, 211, 238, 0.03) inset;
+            border: 1px solid var(--border-ui);
+            width: 100%;
+            max-width: 760px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-sizing: border-box;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 10px rgba(250, 204, 21, 0.2);
+        }
+
+        .subtitle {
+            margin: 6px 0 0 0;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #0b1426 0%, #03060c 100%);
+            border: 2px solid var(--border-ui);
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 22px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .control-element {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .control-header span.badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        /* Toggles styling */
+        .toggle-group {
+            display: flex;
+            background: #0f1626;
+            border: 1px solid var(--border-ui);
+            border-radius: 10px;
+            overflow: hidden;
+            padding: 3px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-transform: uppercase;
+            border-radius: 8px;
+        }
+
+        .toggle-btn.active {
+            background: var(--panel-card);
+            color: var(--text-light);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 
+                        0 0 10px rgba(34, 211, 238, 0.15);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+        }
+
+        .toggle-btn:hover:not(.active) {
+            color: var(--text-light);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Sliders styling */
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #0f1626;
+            border: 1px solid var(--border-ui);
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+            transition: transform 0.1s;
+        }
+
+        .interactive-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #1d2d4f 0%, #111e36 100%);
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, #243964 0%, #162747 100%);
+            border-color: var(--stc-cyan);
+            box-shadow: 0 6px 20px rgba(34, 211, 238, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .action-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* STCpedia box styling */
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border-top: 1px solid rgba(250, 204, 21, 0.05);
+            border-bottom: 1px solid rgba(250, 204, 21, 0.05);
+            border-right: 1px solid rgba(250, 204, 21, 0.02);
+        }
+
+        .avatar-title {
+            font-weight: 800;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .speech-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            font-weight: 300;
+        }
+
+        .speech-text strong {
+            color: var(--stc-yellow);
+            font-weight: 600;
+        }
+
+        .speech-text code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--stc-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="header-container">
+            <h1>Evaporative Cooling Lab</h1>
+            <div class="subtitle">Class 9 Physics: Latent Heat of Vaporization & Surface Phenomenon</div>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="coolingCanvas" width="700" height="380"></canvas>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🧪 Select Liquid Applied:</span>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="liqDryBtn" class="toggle-btn" onclick="setLiquid('none')">Dry (Control)</button>
+                        <button id="liqWaterBtn" class="toggle-btn active" onclick="setLiquid('water')">Water (Moderate)</button>
+                        <button id="liqAcetoneBtn" class="toggle-btn" onclick="setLiquid('acetone')">Acetone (Highly Volatile)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💨 Wind Speed (Fan):</span>
+                        <span id="windBadge" class="badge" style="color: var(--stc-cyan);">OFF</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="windSlider" min="0" max="3" value="0" step="1" oninput="handleWind(this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💧 Relative Humidity:</span>
+                        <span id="humidityBadge" class="badge" style="color: var(--stc-blue);">50%</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="humiditySlider" min="10" max="90" value="50" step="5" oninput="handleHumidity(this.value)">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="action-btn" onclick="resetLab()">🔄 Reset Thermometer & Wet Sleeve</button>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Lab Assistant:</div>
+            <div id="speakerBox" class="speech-text">
+                Apply a liquid like Water or Acetone to the cotton sleeve of the thermometer bulb. Watch how evaporation takes place!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('coolingCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const windBadge = document.getElementById('windBadge');
+        const humidityBadge = document.getElementById('humidityBadge');
+        
+        const windSlider = document.getElementById('windSlider');
+        const humiditySlider = document.getElementById('humiditySlider');
+        
+        const liqDryBtn = document.getElementById('liqDryBtn');
+        const liqWaterBtn = document.getElementById('liqWaterBtn');
+        const liqAcetoneBtn = document.getElementById('liqAcetoneBtn');
+
+        // Physics Parameters
+        const ambientTemp = 30.0; // Room temp in °C
+        let temperature = 30.0; // Current thermometer temp in °C
+        let liquidType = 'water'; // 'none', 'water', 'acetone'
+        let volume = 100.0; // Liquid volume percentage remaining (0 to 100)
+        let windSpeed = 0; // 0, 1, 2, 3
+        let humidity = 50; // 10% to 90%
+        
+        let time = 0;
+        let fanAngle = 0;
+        let history = []; // Temperature graph history points
+        const maxHistory = 110;
+
+        // Visual Layout Coordinates
+        const centerX_Macro = 160;
+        const dividerX = 330;
+        const zoomBox = { x: 360, y: 55, w: 315, h: 290 };
+
+        // Wind Breeze Lines
+        let windLines = [];
+
+        // Particles arrays
+        let solidAtoms = [];
+        let liquidMolecules = [];
+        let vaporParticles = [];
+        let heatPackets = [];
+
+        // Solid Lattice Configuration
+        const latticeRows = 3;
+        const latticeCols = 11;
+        const latticeSpacing = 26;
+        const latticeStartX = zoomBox.x + 30;
+        const latticeStartY = zoomBox.y + 225;
+
+        // Sound / event flash indicators
+        class SolidAtom {
+            constructor(hx, hy) {
+                this.hx = hx; // Home X
+                this.hy = hy; // Home Y
+                this.x = hx;
+                this.y = hy;
+                this.flashCounter = 0; // For flashing when heat is absorbed
+                this.phase = Math.random() * Math.PI * 2;
+                this.speed = 0.08 + Math.random() * 0.04;
+            }
+
+            update(temp) {
+                // Vibration amplitude depends on temperature
+                // Room temp 30°C: high vibration (1.6px). 0°C: low vibration (0.2px).
+                let amp = 0.2 + (temp / 30.0) * 1.5;
+                if (amp < 0.1) amp = 0.1;
+
+                this.x = this.hx + Math.sin(time * this.speed + this.phase) * amp;
+                this.y = this.hy + Math.cos(time * this.speed * 1.1 + this.phase) * amp;
+
+                if (this.flashCounter > 0) {
+                    this.flashCounter--;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 8, 0, Math.PI * 2);
+
+                // Map temperature to HSL color
+                // 30°C -> HSL(0, 85%, 50%) (Bright Red/Orange)
+                // 10°C -> HSL(180, 85%, 45%) (Teal/Cyan)
+                // 0°C -> HSL(240, 85%, 45%) (Deep Blue)
+                let hue = 240 - (temperature / 30.0) * 240;
+                if (hue < 0) hue = 0;
+                if (hue > 240) hue = 240;
+
+                let color = `hsl(${hue}, 85%, 50%)`;
+                if (this.flashCounter > 0) {
+                    // Flash bright cyan/blue to show energy loss
+                    color = `rgba(34, 211, 238, ${this.flashCounter / 15.0})`;
+                }
+
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#101726';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Faint energy glow for hot atoms
+                if (temperature > 20 && this.flashCounter === 0) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.15 * (temperature / 30.0);
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 11, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        class LiquidMolecule {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                this.radius = 5.5;
+                this.ke = Math.random() * 60 + 20; // Individual kinetic energy
+                this.isVapor = false;
+                this.alpha = 1.0;
+                this.targeted = false; // Is a heat packet headed here?
+            }
+
+            update(surfaceY) {
+                if (!this.isVapor) {
+                    // Slowly exchange energy randomly (simulating thermal fluctuations/collisions)
+                    this.ke += (Math.random() - 0.5) * 6;
+                    this.ke = Math.max(10, Math.min(100, this.ke));
+
+                    // Speed depends on kinetic energy
+                    let speed = 0.2 + (this.ke / 100) * 1.2;
+                    this.x += this.vx * speed;
+                    this.y += this.vy * speed;
+
+                    // Bounds inside liquid layer
+                    let minX = zoomBox.x + 10 + this.radius;
+                    let maxX = zoomBox.x + zoomBox.w - 10 - this.radius;
+                    let minY = surfaceY + this.radius;
+                    let maxY = latticeStartY - 12 - this.radius;
+
+                    if (this.x < minX) { this.x = minX; this.vx *= -1; }
+                    if (this.x > maxX) { this.x = maxX; this.vx *= -1; }
+                    if (this.y < minY) { this.y = minY; this.vy *= -1; }
+                    if (this.y > maxY) { this.y = maxY; this.vy *= -1; }
+                } else {
+                    // Vapor gas state: drifting upwards, blown by fan
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    // Upward drift acceleration
+                    this.vy -= 0.05;
+                    if (windSpeed > 0) {
+                        this.vx += 0.08 * windSpeed;
+                    }
+                    // Fade out
+                    this.alpha -= 0.012;
+                }
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                let color;
+                if (this.isVapor) {
+                    color = '#e2e8f0'; // Translucent white for vapor
+                } else {
+                    // Color based on kinetic energy
+                    if (this.ke >= 75) {
+                        color = 'hsl(0, 90%, 55%)'; // Red (hot/high energy)
+                    } else if (this.ke >= 40) {
+                        color = 'hsl(120, 80%, 45%)'; // Green (medium energy)
+                    } else {
+                        color = 'hsl(210, 95%, 55%)'; // Blue (cold/low energy)
+                    }
+                }
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                
+                // Add a gradient style
+                let grad = ctx.createRadialGradient(this.x - 1.5, this.y - 1.5, 0, this.x, this.y, this.radius);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.4, color);
+                grad.addColorStop(1, '#0b132b');
+                
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                if (!this.isVapor && this.ke >= 75) {
+                    // Glow if high energy
+                    ctx.shadowBlur = 6;
+                    ctx.shadowColor = 'red';
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        class HeatPacket {
+            constructor(startX, startY, targetMolecule) {
+                this.x = startX;
+                this.y = startY;
+                this.target = targetMolecule;
+                this.speed = 5;
+                this.active = true;
+                this.trail = [];
+            }
+
+            update() {
+                if (!this.active) return;
+
+                // Move directly towards target
+                let dx = this.target.x - this.x;
+                let dy = this.target.y - this.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist < 6) {
+                    // Reach target! Trigger escape
+                    this.active = false;
+                    this.target.isVapor = true;
+                    this.target.vx = (Math.random() - 0.5) * 1.2 + (windSpeed * 0.8);
+                    this.target.vy = -1.2 - Math.random() * 1.5;
+                    this.target.targeted = false;
+
+                    // Visual shockwave/splash
+                    triggerSplash(this.target.x, this.target.y);
+                } else {
+                    this.trail.push({ x: this.x, y: this.y });
+                    if (this.trail.length > 6) this.trail.shift();
+
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+
+            draw() {
+                if (!this.active) return;
+                
+                // Draw trail
+                ctx.save();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+                ctx.beginPath();
+                for (let i = 0; i < this.trail.length; i++) {
+                    if (i === 0) ctx.moveTo(this.trail[i].x, this.trail[i].y);
+                    else ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                }
+                ctx.stroke();
+
+                // Draw glowing core
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#facc15';
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        let splashes = [];
+        function triggerSplash(x, y) {
+            for (let i = 0; i < 5; i++) {
+                splashes.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: (Math.random() - 0.5) * 3,
+                    life: 20,
+                    maxLife: 20,
+                    color: 'rgba(250, 204, 21, 0.8)'
+                });
+            }
+        }
+
+        function drawSplashes() {
+            ctx.save();
+            splashes.forEach((s, index) => {
+                s.x += s.vx;
+                s.y += s.vy;
+                s.life--;
+                
+                ctx.globalAlpha = s.life / s.maxLife;
+                ctx.fillStyle = s.color;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (s.life <= 0) splashes.splice(index, 1);
+            });
+            ctx.restore();
+        }
+
+        // Initialize Solid Surface Atoms
+        function initSolidAtoms() {
+            solidAtoms = [];
+            for (let r = 0; r < latticeRows; r++) {
+                for (let c = 0; c < latticeCols; c++) {
+                    let hx = latticeStartX + c * latticeSpacing;
+                    let hy = latticeStartY + r * (latticeSpacing - 5);
+                    // Slight staggered offset for triangular packing representation
+                    if (r % 2 === 1) hx += latticeSpacing / 2;
+                    solidAtoms.push(new SolidAtom(hx, hy));
+                }
+            }
+        }
+
+        // Initialize Liquid Molecules
+        function initLiquidMolecules() {
+            liquidMolecules = [];
+            if (liquidType === 'none') return;
+            
+            let count = Math.ceil(50 * (volume / 100));
+            let surfaceY = latticeStartY - 15 - (40 * (volume / 100));
+
+            for (let i = 0; i < count; i++) {
+                let lx = zoomBox.x + 20 + Math.random() * (zoomBox.w - 40);
+                let ly = surfaceY + Math.random() * (latticeStartY - 20 - surfaceY);
+                liquidMolecules.push(new LiquidMolecule(lx, ly));
+            }
+        }
+
+        // Apply Liquid Toggles
+        function setLiquid(type) {
+            liquidType = type;
+            volume = (type === 'none') ? 0.0 : 100.0;
+
+            // Update button visual states
+            liqDryBtn.classList.remove('active');
+            liqWaterBtn.classList.remove('active');
+            liqAcetoneBtn.classList.remove('active');
+
+            if (type === 'none') liqDryBtn.classList.add('active');
+            else if (type === 'water') liqWaterBtn.classList.add('active');
+            else if (type === 'acetone') liqAcetoneBtn.classList.add('active');
+
+            // Re-initialize lists
+            heatPackets = [];
+            splashes = [];
+            initLiquidMolecules();
+            updateDialogue();
+        }
+
+        // Slider Handlers
+        function handleWind(val) {
+            windSpeed = parseInt(val);
+            const labels = ["OFF", "LOW (2 m/s)", "MEDIUM (5 m/s)", "HIGH (8 m/s)"];
+            windBadge.innerText = labels[windSpeed];
+            
+            // Color wind badge accordingly
+            if (windSpeed === 0) windBadge.style.color = 'var(--stc-cyan)';
+            else if (windSpeed === 1) windBadge.style.color = 'var(--stc-green)';
+            else if (windSpeed === 2) windBadge.style.color = 'var(--stc-orange)';
+            else windBadge.style.color = 'var(--stc-red)';
+            
+            updateDialogue();
+        }
+
+        function handleHumidity(val) {
+            humidity = parseInt(val);
+            humidityBadge.innerText = humidity + "%";
+            
+            // Color humidity badge
+            if (humidity < 35) humidityBadge.style.color = 'var(--stc-orange)';
+            else if (humidity < 65) humidityBadge.style.color = 'var(--stc-blue)';
+            else humidityBadge.style.color = 'var(--stc-red)';
+
+            updateDialogue();
+        }
+
+        // Reset Lab
+        function resetLab() {
+            temperature = 30.0;
+            volume = (liquidType === 'none') ? 0.0 : 100.0;
+            history = [];
+            heatPackets = [];
+            splashes = [];
+            
+            initLiquidMolecules();
+            updateDialogue();
+        }
+
+        // Dialogue Assistant Text Generator
+        function updateDialogue() {
+            if (liquidType === 'none') {
+                speakerBox.innerHTML = "💡 <strong>Dry Surface (Control Mode):</strong> No liquid is present, so no evaporation can happen. The thermometer remains constant at the room temperature of <code>30.0°C</code>.";
+                return;
+            }
+
+            if (volume <= 0.1) {
+                speakerBox.innerHTML = "💧 <strong>Completely Dry!</strong> All applied liquid has evaporated. Notice how the cooling has stopped, and the thermometer temperature is now <strong>slowly rising back up</strong> to room temperature (<code>30.0°C</code>) by absorbing heat from the ambient air.";
+                return;
+            }
+
+            let text = "";
+            if (liquidType === 'water') {
+                text += "You applied <strong>Water</strong>. Evaporation is happening at a moderate pace. ";
+                text += "As surface water molecules gain enough energy to break cohesive bonds, they absorb their <strong>latent heat of vaporization</strong> directly from the thermometer bulb, causing the temperature to drop.";
+                
+                if (humidity > 70) {
+                    text += "<br><br>⚠️ <strong>High Humidity Warning:</strong> Because the air is heavily saturated with water molecules (" + humidity + "% RH), it is harder for water molecules to escape. The drying process and cooling rate are <strong>slowed down</strong>.";
+                } else if (humidity < 30) {
+                    text += "<br><br>⚡ <strong>Dry Air Boost:</strong> Low relative humidity (" + humidity + "%) means the air is dry, making it extremely easy for water molecules to escape, <strong>accelerating the cooling rate</strong>!";
+                }
+            } else if (liquidType === 'acetone') {
+                text += "You applied <strong>Acetone</strong>. Acetone has very weak intermolecular forces of attraction, meaning it has a much lower boiling point and is <strong>highly volatile</strong>. ";
+                text += "Molecules break free rapidly at room temperature. Each molecule carries away kinetic energy, causing a <strong>drastic, sudden temperature drop</strong>!";
+                text += "<br><br>🔬 <strong>Science Note:</strong> Since relative humidity measures <em>water</em> vapor saturation in the air, it does NOT block the evaporation of acetone! Acetone evaporates rapidly regardless of room humidity.";
+            }
+
+            if (windSpeed > 0) {
+                text += "<br><br>🌪️ <strong>Wind Effect:</strong> The fan creates air currents that blow away the pocket of saturated vapor sitting directly above the wet cotton sleeve. This exposes the liquid to fresh dry air, <strong>speeding up the rate of evaporation and maximizing cooling</strong>.";
+            }
+
+            speakerBox.innerHTML = text;
+        }
+
+        // Draw Fan Visual on left panel
+        function drawFan(fx, fy) {
+            ctx.save();
+            
+            // Stand Base
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(fx - 20, fy + 45, 40, 8); // base plate
+            ctx.fillRect(fx - 4, fy, 8, 45); // vertical pole
+            
+            // Outer Ring Guard
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(fx, fy, 28, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Blades (rotating based on windSpeed)
+            ctx.translate(fx, fy);
+            fanAngle += windSpeed * 0.15;
+            ctx.rotate(fanAngle);
+            ctx.fillStyle = '#64748b';
+            for (let i = 0; i < 3; i++) {
+                ctx.rotate((2 * Math.PI) / 3);
+                ctx.beginPath();
+                ctx.ellipse(0, -12, 6, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Central pin
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(0, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw Wind Breeze Waves
+        function drawWindFlow() {
+            if (windSpeed === 0) return;
+            
+            // Spawn wind wave lines
+            if (Math.random() < 0.12) {
+                windLines.push({
+                    x: 45,
+                    y: 60 + Math.random() * 180,
+                    speed: 4 + windSpeed * 3,
+                    len: 30 + Math.random() * 40,
+                    alpha: 0.15 + Math.random() * 0.2
+                });
+            }
+
+            ctx.save();
+            windLines.forEach((wl, idx) => {
+                wl.x += wl.speed;
+                ctx.strokeStyle = `rgba(34, 211, 238, ${wl.alpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(wl.x, wl.y);
+                ctx.lineTo(wl.x + wl.len, wl.y);
+                ctx.stroke();
+
+                // Remove line if past the macroscopic partition limit
+                if (wl.x > dividerX - 20) {
+                    windLines.splice(idx, 1);
+                }
+            });
+            ctx.restore();
+        }
+
+        // Draw Thermometer setup on Left Panel
+        function drawThermometer() {
+            const tx = 145;
+            const ty = 40;
+            const th = 200;
+            const tw = 12;
+            const bulbRadius = 20;
+            const bulbY = ty + th + 10;
+
+            ctx.save();
+
+            // 1. Draw outer glass casing (stem)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2.5;
+            
+            // Capsule stem
+            ctx.beginPath();
+            ctx.roundRect(tx - tw/2, ty, tw, th, [6, 6, 0, 0]);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glass bulb outline
+            ctx.beginPath();
+            ctx.arc(tx, bulbY, bulbRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 2. Draw sleeve wrapper on bulb if liquid is present
+            if (liquidType !== 'none' && volume > 0.1) {
+                let sleeveColor = '';
+                if (liquidType === 'water') sleeveColor = 'rgba(59, 130, 246, 0.45)'; // Translucent blue
+                else sleeveColor = 'rgba(192, 132, 252, 0.45)'; // Translucent purple
+
+                ctx.fillStyle = sleeveColor;
+                ctx.strokeStyle = (liquidType === 'water') ? 'rgba(59, 130, 246, 0.7)' : 'rgba(192, 132, 252, 0.7)';
+                ctx.lineWidth = 1.5;
+                
+                ctx.beginPath();
+                ctx.arc(tx, bulbY, bulbRadius + 4.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw tiny drops or wet look lines on sleeve
+                ctx.fillStyle = (liquidType === 'water') ? '#60a5fa' : '#c084fc';
+                for (let d = 0; d < 6; d++) {
+                    let angle = (d * Math.PI) / 3 + (time * 0.005);
+                    let dx = tx + Math.cos(angle) * (bulbRadius + 3);
+                    let dy = bulbY + Math.sin(angle) * (bulbRadius + 3);
+                    ctx.beginPath();
+                    ctx.arc(dx, dy, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // 3. Draw Thermometer Scale & Tick Markings
+            ctx.fillStyle = varColor('--text-muted');
+            ctx.font = '500 8.5px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#334155';
+
+            for (let tempVal = 0; tempVal <= 40; tempVal += 5) {
+                // Map temp to Y: 0°C is bottom (ty + th - 20), 40°C is top (ty + 15)
+                let scaleY = (ty + th - 20) - (tempVal / 40) * (th - 35);
+                
+                // Draw major line
+                ctx.beginPath();
+                ctx.moveTo(tx - tw/2 - 4, scaleY);
+                ctx.lineTo(tx - tw/2, scaleY);
+                ctx.stroke();
+
+                ctx.fillText(tempVal + "°C", tx - tw/2 - 7, scaleY + 3);
+            }
+
+            // 4. Draw Inner Mercury/Spirit level
+            // Map current temperature to height
+            let mercuryBottom = ty + th - 20;
+            let mercuryTop = (ty + th - 20) - (temperature / 40) * (th - 35);
+            if (mercuryTop < ty + 5) mercuryTop = ty + 5;
+            if (mercuryTop > mercuryBottom) mercuryTop = mercuryBottom;
+
+            // Red column fill
+            ctx.fillStyle = 'var(--stc-red)';
+            ctx.fillRect(tx - 3, mercuryTop, 6, mercuryBottom - mercuryTop);
+
+            // Red bulb fill
+            ctx.beginPath();
+            ctx.arc(tx, bulbY, bulbRadius - 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Specular reflection highlight on glass bulb
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(tx - 6, bulbY - 6, 3, 6, -Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Digital Temp value readout text
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(temperature.toFixed(1) + " °C", tx, bulbY + bulbRadius + 28);
+
+            // Volume label (wetness level)
+            if (liquidType !== 'none') {
+                ctx.font = '500 9px monospace';
+                ctx.fillStyle = (volume > 20) ? 'var(--stc-cyan)' : 'var(--stc-red)';
+                ctx.fillText("SLEEVE WETNESS: " + Math.ceil(volume) + "%", tx, bulbY + bulbRadius + 44);
+            } else {
+                ctx.font = '500 9px monospace';
+                ctx.fillStyle = 'var(--text-muted)';
+                ctx.fillText("SLEEVE DRY", tx, bulbY + bulbRadius + 44);
+            }
+
+            ctx.restore();
+        }
+
+        // Draw Scrolling Temperature Curve Chart on Left Panel
+        function drawGraph(gx, gy, gw, gh) {
+            ctx.save();
+            
+            // Background card panel
+            ctx.fillStyle = 'rgba(11, 19, 38, 0.7)';
+            ctx.strokeStyle = 'var(--border-ui)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(gx, gy, gw, gh, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Grid lines (y mapping: 0 to 40°C)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.font = '7px sans-serif';
+            ctx.textAlign = 'right';
+
+            for (let tLabel = 0; tLabel <= 40; tLabel += 10) {
+                let ly = gy + gh - 15 - (tLabel / 40) * (gh - 25);
+                ctx.beginPath();
+                ctx.moveTo(gx + 20, ly);
+                ctx.lineTo(gx + gw - 8, ly);
+                ctx.stroke();
+                ctx.fillText(tLabel + "°", gx + 17, ly + 2);
+            }
+
+            // Draw cooling curve line
+            if (history.length > 1) {
+                ctx.strokeStyle = (liquidType === 'acetone') ? 'var(--stc-purple)' : 'var(--stc-cyan)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                for (let i = 0; i < history.length; i++) {
+                    let pointX = gx + 22 + (i / maxHistory) * (gw - 34);
+                    let pointY = gy + gh - 15 - (history[i] / 40) * (gh - 25);
+                    
+                    if (i === 0) ctx.moveTo(pointX, pointY);
+                    else ctx.lineTo(pointX, pointY);
+                }
+                ctx.stroke();
+
+                // Draw linear area gradient under line
+                let grad = ctx.createLinearGradient(gx, gy, gx, gy + gh);
+                grad.addColorStop(0, (liquidType === 'acetone') ? 'rgba(192, 132, 252, 0.15)' : 'rgba(34, 211, 238, 0.15)');
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grad;
+                ctx.lineTo(gx + 22 + ((history.length-1) / maxHistory) * (gw - 34), gy + gh - 15);
+                ctx.lineTo(gx + 22, gy + gh - 15);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Title label
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("TEMPERATURE OVER TIME", gx + gw/2, gy + 11);
+
+            ctx.restore();
+        }
+
+        // Draw Zoom-In Border and labels on Right Panel
+        function drawZoomInView() {
+            ctx.save();
+
+            // Draw background frame panel
+            ctx.fillStyle = '#060a15';
+            ctx.fillRect(zoomBox.x, zoomBox.y, zoomBox.w, zoomBox.h);
+            ctx.strokeStyle = 'var(--border-ui)';
+            ctx.lineWidth = 2.0;
+            ctx.strokeRect(zoomBox.x, zoomBox.y, zoomBox.w, zoomBox.h);
+
+            // Draw label heading banner
+            ctx.fillStyle = 'rgba(29, 41, 70, 0.85)';
+            ctx.fillRect(zoomBox.x, zoomBox.y, zoomBox.w, 24);
+            ctx.strokeStyle = 'var(--border-ui)';
+            ctx.beginPath();
+            ctx.moveTo(zoomBox.x, zoomBox.y + 24);
+            ctx.lineTo(zoomBox.x + zoomBox.w, zoomBox.y + 24);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("MICROSCOPIC BOUNDARY VIEW (ZOOMED)", zoomBox.x + zoomBox.w/2, zoomBox.y + 15);
+
+            // Floor thermometer lattice label at bottom
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillText("THERMOMETER BULB SURFACE (SOLID LATTICE)", zoomBox.x + zoomBox.w/2, zoomBox.y + zoomBox.h - 10);
+
+            // Draw liquid level overlay meniscus line
+            if (liquidType !== 'none' && volume > 0.1) {
+                let surfaceY = latticeStartY - 15 - (40 * (volume / 100));
+                
+                // Draw liquid background shade
+                ctx.fillStyle = (liquidType === 'water') ? 'rgba(59, 130, 246, 0.12)' : 'rgba(192, 132, 252, 0.12)';
+                ctx.fillRect(zoomBox.x + 1, surfaceY, zoomBox.w - 2, latticeStartY - surfaceY);
+
+                // Draw surface line with a small wave ripple
+                ctx.strokeStyle = (liquidType === 'water') ? 'rgba(125, 211, 252, 0.5)' : 'rgba(216, 180, 254, 0.5)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(zoomBox.x + 1, surfaceY);
+                ctx.quadraticCurveTo(zoomBox.x + zoomBox.w/2, surfaceY + Math.sin(time * 0.05) * 1.5, zoomBox.x + zoomBox.w - 1, surfaceY);
+                ctx.stroke();
+
+                // Surface label
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.font = 'italic 7.5px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText("Liquid Surface (Meniscus)", zoomBox.x + zoomBox.w - 10, surfaceY - 6);
+            }
+
+            ctx.restore();
+        }
+
+        // Draw Particle Color & Energy Key Legend
+        function drawLegend() {
+            ctx.save();
+            let lx = 370;
+            let ly = 10;
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = 'bold 7.5px sans-serif';
+            ctx.fillText("PARTICLE ENERGY LEVELS:", lx, ly);
+
+            // Cold (Blue)
+            ctx.fillStyle = 'hsl(210, 95%, 55%)';
+            ctx.beginPath(); ctx.arc(lx + 105, ly - 3, 3.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'var(--text-muted)'; ctx.font = '7.5px sans-serif';
+            ctx.fillText("Low (Cold)", lx + 112, ly);
+
+            // Medium (Green)
+            ctx.fillStyle = 'hsl(120, 80%, 45%)';
+            ctx.beginPath(); ctx.arc(lx + 155, ly - 3, 3.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'var(--text-muted)';
+            ctx.fillText("Medium", lx + 162, ly);
+
+            // High (Red)
+            ctx.fillStyle = 'hsl(0, 90%, 55%)';
+            ctx.beginPath(); ctx.arc(lx + 200, ly - 3, 3.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'var(--text-muted)';
+            ctx.fillText("High (Energetic)", lx + 207, ly);
+
+            ctx.restore();
+        }
+
+        // Get value from stylesheet root variable
+        function varColor(varName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        }
+
+        // Main Physics Engine loop logic
+        function updatePhysics() {
+            time++;
+
+            // Push temperature to graph history
+            if (time % 8 === 0) {
+                history.push(temperature);
+                if (history.length > maxHistory) {
+                    history.shift();
+                }
+            }
+
+            // 1. Temperature updates (Macroscopic DE solver)
+            // Heat gain from warm room temperature (ambient conduction/convection)
+            let heatGainRate = 0.00075 * (ambientTemp - temperature) * (1 + windSpeed * 0.35);
+            
+            let evapCoolingRate = 0;
+            if (liquidType !== 'none' && volume > 0.1) {
+                // Rate equations
+                let baseEvap = (liquidType === 'acetone') ? 0.007 : 0.0018;
+                let windFactor = 1 + windSpeed * 0.75;
+                let humidityFactor = (liquidType === 'water') ? (1 - humidity / 100) : 1.0;
+                let tempFactor = 0.5 + (temperature / 30.0) * 0.5;
+
+                let currentEvapRate = baseEvap * windFactor * humidityFactor * tempFactor;
+                
+                // Latent heat coefficient (water cools more per molecule, but acetone has a higher overall rate)
+                let latentHeatCoeff = (liquidType === 'acetone') ? 8.0 : 15.0;
+                evapCoolingRate = currentEvapRate * latentHeatCoeff;
+
+                // Decrease liquid volume on bulb sleeve
+                volume = Math.max(0.0, volume - currentEvapRate * 6.5);
+            }
+
+            // Dynamic derivative delta
+            temperature += (heatGainRate - evapCoolingRate);
+            temperature = Math.max(0.0, temperature);
+
+            // 2. Microscopic particle generation and launch updates
+            // Let's dynamically adjust count of liquid molecules based on volume
+            let targetCount = (liquidType === 'none') ? 0 : Math.ceil(40 * (volume / 100));
+            
+            // Adjust molecule elements list size dynamically
+            if (liquidMolecules.length < targetCount && volume > 0.1) {
+                // Spawn a new one near the bottom
+                let surfaceY = latticeStartY - 15 - (40 * (volume / 100));
+                let lx = zoomBox.x + 20 + Math.random() * (zoomBox.w - 40);
+                let ly = surfaceY + Math.random() * (latticeStartY - 20 - surfaceY);
+                liquidMolecules.push(new LiquidMolecule(lx, ly));
+            } else if (liquidMolecules.length > targetCount) {
+                // Remove molecules that are not in vapor state
+                for (let i = liquidMolecules.length - 1; i >= 0; i--) {
+                    if (!liquidMolecules[i].isVapor) {
+                        liquidMolecules.splice(i, 1);
+                        if (liquidMolecules.length <= targetCount) break;
+                    }
+                }
+            }
+
+            // Launch Latent Heat packets
+            if (liquidType !== 'none' && volume > 0.1) {
+                let surfaceY = latticeStartY - 15 - (40 * (volume / 100));
+                let launchChance = (liquidType === 'acetone') ? 0.045 : 0.012;
+                
+                // Wind accelerates packet events (faster evaporation)
+                launchChance *= (1 + windSpeed * 0.6);
+                if (liquidType === 'water') launchChance *= (1 - humidity / 100);
+
+                if (Math.random() < launchChance) {
+                    // Pick a molecule near the surface that is not targeted/vaporized
+                    let eligible = liquidMolecules.filter(m => !m.isVapor && !m.targeted && m.y < surfaceY + 20);
+                    if (eligible.length > 0) {
+                        let targetMol = eligible[Math.floor(Math.random() * eligible.length)];
+                        targetMol.targeted = true;
+
+                        // Pick a solid lattice atom from the top row to supply heat energy
+                        let topSolidRow = solidAtoms.slice(0, 11);
+                        let sourceAtom = topSolidRow[Math.floor(Math.random() * topSolidRow.length)];
+                        
+                        // Local flash to show heat absorption
+                        sourceAtom.flashCounter = 20;
+
+                        heatPackets.push(new HeatPacket(sourceAtom.x, sourceAtom.y, targetMol));
+                    }
+                }
+            }
+
+            // Update Lattice solid atoms
+            solidAtoms.forEach(a => a.update(temperature));
+
+            // Update liquid molecules
+            let surfaceY = latticeStartY - 15 - (40 * (volume / 100));
+            liquidMolecules.forEach((m, idx) => {
+                m.update(surfaceY);
+                // Remove faded vapor particles
+                if (m.isVapor && m.alpha <= 0) {
+                    liquidMolecules.splice(idx, 1);
+                }
+            });
+
+            // Update heat packets
+            heatPackets.forEach((p, idx) => {
+                p.update();
+                if (!p.active) {
+                    heatPackets.splice(idx, 1);
+                }
+            });
+
+            // Dialogue auto-transition updates when dry
+            if (volume <= 0.1 && liquidType !== 'none') {
+                updateDialogue();
+            }
+        }
+
+        // Master Render Cycle
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Macroscopic components
+            drawFan(45, 120);
+            drawWindFlow();
+            drawThermometer();
+            drawGraph(190, 55, 130, 190);
+
+            // Partition divider line
+            ctx.save();
+            ctx.strokeStyle = 'var(--border-ui)';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(dividerX, 15);
+            ctx.lineTo(dividerX, canvas.height - 15);
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Microscopic components
+            drawZoomInView();
+            drawLegend();
+
+            // Render active components inside Zoom Box
+            ctx.save();
+            // Clip region so particles don't spill outside boundaries
+            ctx.beginPath();
+            ctx.rect(zoomBox.x + 1, zoomBox.y + 25, zoomBox.w - 2, zoomBox.h - 26);
+            ctx.clip();
+
+            solidAtoms.forEach(a => a.draw());
+            liquidMolecules.forEach(m => m.draw());
+            heatPackets.forEach(p => p.draw());
+            drawSplashes();
+
+            ctx.restore();
+
+            // Render loop trigger
+            updatePhysics();
+            requestAnimationFrame(draw);
+        }
+
+        // Initialize lists and start cycle
+        initSolidAtoms();
+        setLiquid('water');
+        handleWind(0);
+        handleHumidity(50);
+        draw();
+    </script>
+</body>
+</html>
