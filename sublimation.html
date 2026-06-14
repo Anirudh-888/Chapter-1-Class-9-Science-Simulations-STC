@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Lab - Sublimation & Deposition of Ammonium Chloride</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-cyan: #22d3ee;
+            --stc-orange: #f97316;
+            --stc-red: #ef4444;
+            --stc-green: #10b981;
+            --stc-blue: #3b82f6;
+            --stc-purple: #c084fc;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .control-element {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #1e293b;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .toggle-group {
+            display: flex;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            border-radius: 8px;
+            overflow: hidden;
+            padding: 2px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            border-radius: 6px;
+        }
+
+        .toggle-btn.active {
+            background: var(--panel-bg);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #273549;
+            border-color: #cbd5e1;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .speech-text strong {
+            color: var(--stc-yellow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="header-container">
+            <h1>Sublimation of Ammonium Chloride Lab</h1>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="subCanvas" width="670" height="340"></canvas>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🔥 ADJUST BURNER FLAME INTENSITY:</span>
+                        <span id="burnerBadge" style="color:var(--stc-orange); font-weight:bold;">OFF</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="burnerSlider" min="0" max="3" value="0" oninput="handleBurner(this.value)">
+                </div>
+                
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🔬 MICROSCOPIC FOCUS AREA:</span>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="focusDishBtn" class="toggle-btn active" onclick="setMicroscopeMode('dish')">Evaporating Dish</button>
+                        <button id="focusWallBtn" class="toggle-btn" onclick="setMicroscopeMode('wall')">Funnel Wall</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="action-btn" id="scrapeBtn" onclick="scrapeSublimate()" disabled>🧹 Scrape & Collect Sublimate</button>
+                <button class="action-btn" onclick="resetLab()">🔄 Reset Laboratory Experiment</button>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Lab Assistant:</div>
+            <div id="speakerBox" class="speech-text">Welcome to the Chemistry Lab. Set the Bunsen burner flame above <strong>OFF</strong> to start heating the Ammonium Chloride ($NH_4Cl$) in the evaporating China dish.</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('subCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const burnerBadge = document.getElementById('burnerBadge');
+        const burnerSlider = document.getElementById('burnerSlider');
+        const focusDishBtn = document.getElementById('focusDishBtn');
+        const focusWallBtn = document.getElementById('focusWallBtn');
+        const scrapeBtn = document.getElementById('scrapeBtn');
+
+        // Simulation Parameters
+        let temperature = 25.0; // °C
+        let dishSolid = 100.0; // % solid remaining in China dish
+        let funnelSolid = 0.0; // % sublimate deposited on funnel walls
+        let vaporDensity = 0.0; // active suspended vapors in funnel
+        let burnerLevel = 0; // 0: off, 1: low, 2: medium, 3: high
+        let heatApplied = 0.0; // degrees per frame
+        let microscopeMode = 'dish'; // 'dish' or 'wall'
+        
+        // Particle arrays
+        let vaporParticles = [];
+        let microParticles = [];
+        let flashes = [];
+
+        // Animation triggers
+        let flameTime = 0;
+        let particleTime = 0;
+
+        // Visual setup details
+        const cx = 190; // Center X of the tripod/burner setup
+        const insetX = 555;
+        const insetY = 95;
+        const insetRadius = 52;
+
+        // Class representing microscopic particles in the circle viewport
+        class MicroParticle {
+            constructor(type, relX, relY, state, index) {
+                this.type = type; // 'NH4' (cation), 'Cl' (anion), 'NH3' (ammonia gas), 'HCl' (hydrochloric acid gas)
+                this.relX = relX; // grid x coordinate relative to circle center
+                this.relY = relY; // grid y coordinate relative to circle center
+                this.x = insetX + relX;
+                this.y = insetY + relY;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.radius = type === 'NH4' ? 4.2 : (type === 'Cl' ? 3.8 : (type === 'NH3' ? 4.8 : 4.4));
+                this.state = state; // 'bonded', 'gas'
+                this.alpha = 1.0;
+                this.index = index;
+                this.angle = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.05;
+            }
+
+            update() {
+                if (microscopeMode === 'dish') {
+                    if (this.state === 'bonded') {
+                        // Vibration increases with temperature
+                        let jitterAmp = 0.2 + (temperature / 337.8) * 1.6;
+                        this.x = insetX + this.relX + (Math.random() - 0.5) * jitterAmp;
+                        this.y = insetY + this.relY + (Math.random() - 0.5) * jitterAmp;
+
+                        // Calculate surface boundary: solid grid reduces height based on remaining dishSolid
+                        let activeSurfaceY = (insetY + 42) - (dishSolid / 100) * 36;
+                        
+                        // Surface particles have a chance to sublimate (dissociate) at sublimation temp
+                        if (temperature >= 337.8 && this.y < activeSurfaceY + 8 && dishSolid > 0) {
+                            if (Math.random() < 0.003 * burnerLevel) {
+                                this.state = 'gas';
+                                // Dissociate into one NH3 and one HCl molecule alternatingly
+                                this.type = Math.random() < 0.5 ? 'NH3' : 'HCl';
+                                this.vx = (Math.random() - 0.5) * 1.2;
+                                this.vy = -0.8 - Math.random() * 0.8;
+                            }
+                        }
+                    } else if (this.state === 'gas') {
+                        // Move gas upwards and outwards
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.angle += this.rotSpeed;
+
+                        // Recycle particle when it exits the upper circle bounds
+                        let dx = this.x - insetX;
+                        let dy = this.y - insetY;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > insetRadius - 5 || this.y < insetY - 10) {
+                            this.state = 'bonded';
+                            this.type = this.index % 2 === 0 ? 'NH4' : 'Cl';
+                            this.x = insetX + this.relX;
+                            this.y = insetY + this.relY;
+                            this.vx = (Math.random() - 0.5) * 0.8;
+                            this.vy = (Math.random() - 0.5) * 0.8;
+                        }
+                    }
+                } else {
+                    // Funnel wall deposition mode
+                    if (this.state === 'bonded') {
+                        // Deposited solid vibrating on the cool glass wall (right side)
+                        let jitterAmp = 0.15 + (temperature / 337.8) * 0.5;
+                        this.x = insetX + this.relX + (Math.random() - 0.5) * jitterAmp;
+                        this.y = insetY + this.relY + (Math.random() - 0.5) * jitterAmp;
+
+                        // If temperature gets too hot, sublimate deposited crystals back into gas!
+                        if (temperature > 320.0 && Math.random() < 0.0008 * (temperature - 320)) {
+                            this.state = 'gas';
+                            this.type = Math.random() < 0.5 ? 'NH3' : 'HCl';
+                            this.vx = -0.8 - Math.random() * 0.8;
+                            this.vy = (Math.random() - 0.5) * 1.0;
+                        }
+                    } else if (this.state === 'gas') {
+                        // Gas molecules flying in from the bottom/left
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.angle += this.rotSpeed;
+
+                        // Boundary checks for the left side of the circle
+                        let dx = this.x - insetX;
+                        let dy = this.y - insetY;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > insetRadius - 5) {
+                            let nx = dx / dist;
+                            let ny = dy / dist;
+
+                            // Push inside
+                            this.x = insetX + nx * (insetRadius - 6);
+                            this.y = insetY + ny * (insetRadius - 6);
+
+                            // Reflect velocity
+                            let dot = this.vx * nx + this.vy * ny;
+                            this.vx -= 2 * dot * nx;
+                            this.vy -= 2 * dot * ny;
+                            
+                            // Clamp velocity to prevent wild acceleration
+                            this.vx = Math.max(-1.5, Math.min(1.5, this.vx * 0.9));
+                            this.vy = Math.max(-1.5, Math.min(1.5, this.vy * 0.9));
+                        }
+
+                        // Check collision with the deposition wall layer threshold on the right
+                        let wallThresholdX = insetX + 42 - (funnelSolid / 100) * 34;
+                        if (this.x > wallThresholdX - 6) {
+                            // Recombine: Gas molecules attach and align back to solid
+                            this.state = 'bonded';
+                            this.type = this.index % 2 === 0 ? 'NH4' : 'Cl';
+                            this.relX = this.x - insetX;
+                            this.relY = this.y - insetY;
+                            
+                            // Spawn a small spark visual
+                            addFlash(this.x, this.y);
+
+                            // Increment macro deposition progress slightly faster for immediate UI feedback
+                            if (funnelSolid < 100.0) {
+                                funnelSolid = Math.min(100.0, funnelSolid + 0.35);
+                            }
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                if (this.state === 'bonded') {
+                    // Render ionic crystalline lattice (alternating purple cations & cyan anions)
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    let grad = ctx.createRadialGradient(this.x - 1, this.y - 1, 0, this.x, this.y, this.radius);
+                    
+                    if (this.type === 'NH4') {
+                        // Ammonium cation (NH4+)
+                        grad.addColorStop(0, '#e879f9');
+                        grad.addColorStop(0.5, '#c084fc');
+                        grad.addColorStop(1, '#6b21a8');
+                        ctx.fillStyle = grad;
+                        ctx.shadowColor = '#c084fc';
+                    } else {
+                        // Chloride anion (Cl-)
+                        grad.addColorStop(0, '#67e8f9');
+                        grad.addColorStop(0.5, '#22d3ee');
+                        grad.addColorStop(1, '#0e7490');
+                        ctx.fillStyle = grad;
+                        ctx.shadowColor = '#22d3ee';
+                    }
+                    ctx.shadowBlur = 4;
+                    ctx.fill();
+                } else if (this.state === 'gas') {
+                    // Render gas molecules (decomposed compounds NH3 or HCl)
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+
+                    if (this.type === 'NH3') {
+                        // Ammonia: Nitrogen (blue, center) + 3 Hydrogen atoms (white, peripheral)
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 4.2, 0, Math.PI * 2);
+                        let grad = ctx.createRadialGradient(-1, -1, 0, 0, 0, 4.2);
+                        grad.addColorStop(0, '#60a5fa');
+                        grad.addColorStop(1, '#1d4ed8');
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+
+                        ctx.fillStyle = '#ffffff';
+                        const hAngles = [0, 2 * Math.PI / 3, 4 * Math.PI / 3];
+                        hAngles.forEach(angle => {
+                            let hx = Math.cos(angle) * 3.8;
+                            let hy = Math.sin(angle) * 3.8;
+                            ctx.beginPath();
+                            ctx.arc(hx, hy, 1.6, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                    } else {
+                        // Hydrogen Chloride: Chlorine (green, large) + 1 Hydrogen (white, small)
+                        ctx.beginPath();
+                        ctx.arc(-2, 0, 3.8, 0, Math.PI * 2);
+                        let grad = ctx.createRadialGradient(-3, -1, 0, -2, 0, 3.8);
+                        grad.addColorStop(0, '#34d399');
+                        grad.addColorStop(1, '#047857');
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(2.0, 0, 1.6, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.restore();
+            }
+        }
+
+        // Initialize microscopic particle array
+        function initMicroscopic() {
+            microParticles = [];
+            let index = 0;
+
+            if (microscopeMode === 'dish') {
+                // Pre-generate solid crystal lattice rows at the bottom of the circular frame
+                for (let row = 0; row < 5; row++) {
+                    let dy = 12 + row * 8; // Y offsets down from middle
+                    let cols = 7 - (row % 2);
+                    let startCol = -cols / 2;
+                    for (let col = 0; col < cols; col++) {
+                        let dx = (startCol + col + 0.25) * 11;
+                        if (dx * dx + dy * dy < (insetRadius - 10) * (insetRadius - 10)) {
+                            let type = index % 2 === 0 ? 'NH4' : 'Cl';
+                            microParticles.push(new MicroParticle(type, dx, dy, 'bonded', index++));
+                        }
+                    }
+                }
+
+                // Add random gas particles flying above if temperature is at sublimation
+                if (temperature >= 337.8) {
+                    for (let g = 0; g < 6; g++) {
+                        let rx = (Math.random() - 0.5) * 40;
+                        let ry = -10 - Math.random() * 20;
+                        let type = g % 2 === 0 ? 'NH3' : 'HCl';
+                        let p = new MicroParticle(type, rx, ry, 'gas', index++);
+                        p.vy = -0.5 - Math.random() * 0.8;
+                        microParticles.push(p);
+                    }
+                }
+            } else {
+                // Pre-generate deposited solid crystals on the cool right wall
+                for (let col = 0; col < 4; col++) {
+                    let dx = 42 - col * 9; // X coordinates moving left from right edge
+                    let rows = 9 - col;
+                    let startRow = -rows / 2;
+                    for (let row = 0; row < rows; row++) {
+                        let dy = (startRow + row + 0.25) * 11;
+                        
+                        // Verify coordinates fit within the circle and also correspond to current funnelSolid percentage
+                        if (dx * dx + dy * dy < (insetRadius - 10) * (insetRadius - 10)) {
+                            let activeThreshold = 42 - (funnelSolid / 100) * 34;
+                            if (dx > activeThreshold) {
+                                let type = index % 2 === 0 ? 'NH4' : 'Cl';
+                                microParticles.push(new MicroParticle(type, dx, dy, 'bonded', index++));
+                            }
+                        }
+                    }
+                }
+
+                // Pre-populate incoming gaseous molecules flying from left to right
+                let activeGasCount = vaporDensity > 0 ? Math.floor(vaporDensity / 8) + 4 : 4;
+                for (let g = 0; g < activeGasCount; g++) {
+                    let rx = -45 + Math.random() * 30;
+                    let ry = (Math.random() - 0.5) * 60;
+                    let type = g % 2 === 0 ? 'NH3' : 'HCl';
+                    let p = new MicroParticle(type, rx, ry, 'gas', index++);
+                    p.vx = 0.4 + Math.random() * 0.8;
+                    p.vy = (Math.random() - 0.5) * 0.8;
+                    microParticles.push(p);
+                }
+            }
+        }
+
+        // Particle Class for rising white vapors inside the laboratory funnel
+        class VaporParticle {
+            constructor() {
+                // Starts just above the China dish powder
+                this.x = cx - 25 + Math.random() * 50;
+                this.y = 175;
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = -0.4 - Math.random() * 0.6;
+                this.radius = 4 + Math.random() * 4;
+                this.alpha = 0.4 + Math.random() * 0.2;
+                this.decay = 0.0015 + Math.random() * 0.0015;
+                this.deposited = false;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+                this.radius += 0.08;
+                
+                // Constrain vapor motion to within the inverted glass funnel borders
+                let currentY = this.y;
+                if (currentY > 120 && currentY <= 188) {
+                    // Sloped wall region
+                    let progress = (188 - currentY) / 68; // 0 at bottom, 1 at neck
+                    let halfWidth = 44 - progress * 38; // 44 at bottom, 6 at neck
+                    let leftLimit = cx - halfWidth;
+                    let rightLimit = cx + halfWidth;
+                    
+                    if (this.x < leftLimit + this.radius) {
+                        this.x = leftLimit + this.radius;
+                        this.vx = -this.vx * 0.3;
+                        if (Math.random() < 0.18) this.deposit(); // Collides and deposits
+                    } else if (this.x > rightLimit - this.radius) {
+                        this.x = rightLimit - this.radius;
+                        this.vx = -this.vx * 0.3;
+                        if (Math.random() < 0.18) this.deposit(); // Collides and deposits
+                    }
+                } else if (currentY <= 120 && currentY >= 58) {
+                    // Vertical narrow stem region
+                    let leftLimit = cx - 5;
+                    let rightLimit = cx + 5;
+                    
+                    if (this.x < leftLimit + this.radius) {
+                        this.x = leftLimit + this.radius;
+                        this.vx = -this.vx * 0.3;
+                        if (Math.random() < 0.25) this.deposit();
+                    } else if (this.x > rightLimit - this.radius) {
+                        this.x = rightLimit - this.radius;
+                        this.vx = -this.vx * 0.3;
+                        if (Math.random() < 0.25) this.deposit();
+                    }
+                    
+                    // Stopped by the cotton wool plug
+                    if (currentY < 68) {
+                        this.y = 68;
+                        this.vy = 0;
+                        this.alpha -= 0.02; // escape rate is halted, disappears as it deposits
+                        if (Math.random() < 0.4) this.deposit();
+                    }
+                } else if (currentY > 188) {
+                    // Below funnel neck (within evaporating dish mouth)
+                    if (this.x < cx - 35) this.x = cx - 35;
+                    if (this.x > cx + 35) this.x = cx + 35;
+                }
+            }
+
+            deposit() {
+                if (!this.deposited) {
+                    this.deposited = true;
+                    this.alpha = 0; // instantly disappears as it crystallizes
+                    
+                    // Increment deposited sublimate
+                    if (funnelSolid < 100.0) {
+                        funnelSolid = Math.min(100.0, funnelSolid + 0.15);
+                    }
+                }
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.fillStyle = 'rgba(241, 245, 249, ' + this.alpha + ')';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Add a micro recombination flash
+        function addFlash(x, y) {
+            flashes.push({
+                x: x,
+                y: y,
+                radius: 1.5,
+                maxRadius: 7.0,
+                alpha: 1.0
+            });
+        }
+
+        // Draw and update micro-recombination flashes
+        function updateAndDrawFlashes() {
+            flashes.forEach((f, idx) => {
+                f.radius += 0.4;
+                f.alpha -= 0.08;
+                if (f.alpha <= 0) {
+                    flashes.splice(idx, 1);
+                    return;
+                }
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255, 255, 255, ' + f.alpha + ')';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            });
+        }
+
+        // Burner slider handler
+        function handleBurner(val) {
+            burnerLevel = parseInt(val);
+            const labels = ["OFF", "LOW (35 W)", "MEDIUM (75 W)", "HIGH (150 W)"];
+            burnerBadge.innerText = labels[burnerLevel];
+
+            // Set heating increments based on intensity
+            const rates = [0.0, 0.22, 0.48, 0.95]; // °C heating per frame
+            heatApplied = rates[burnerLevel];
+            updateDialogue();
+        }
+
+        // Microscope mode selector
+        function setMicroscopeMode(mode) {
+            microscopeMode = mode;
+            if (mode === 'dish') {
+                focusDishBtn.classList.add('active');
+                focusWallBtn.classList.remove('active');
+            } else {
+                focusDishBtn.classList.remove('active');
+                focusWallBtn.classList.add('active');
+            }
+            initMicroscopic();
+            updateDialogue();
+        }
+
+        // Scrape wall deposit back to dish
+        function scrapeSublimate() {
+            if (funnelSolid <= 0) return;
+            
+            // Re-deposit pure crystals back to the evaporating dish
+            dishSolid = Math.min(100.0, dishSolid + funnelSolid);
+            funnelSolid = 0.0;
+            vaporDensity = 0.0;
+            vaporParticles = [];
+            
+            initMicroscopic();
+            updateDialogue();
+            scrapeBtn.disabled = true;
+        }
+
+        // Full reset
+        function resetLab() {
+            temperature = 25.0;
+            dishSolid = 100.0;
+            funnelSolid = 0.0;
+            vaporDensity = 0.0;
+            vaporParticles = [];
+            flashes = [];
+            
+            burnerSlider.value = 0;
+            handleBurner(0);
+            
+            setMicroscopeMode('dish');
+            initMicroscopic();
+            updateDialogue();
+            scrapeBtn.disabled = true;
+        }
+
+        // Physics step solver
+        function updatePhysics() {
+            flameTime += (burnerLevel + 1) * 0.16;
+            particleTime++;
+
+            // Heat transfer rates
+            let Q = heatApplied;
+            if (burnerLevel === 0) {
+                // Passive heat loss towards room temperature (25°C)
+                let coolingCoeff = 0.0035;
+                Q = (25.0 - temperature) * coolingCoeff;
+            }
+
+            // Phase State machine
+            if (temperature < 337.8) {
+                temperature += Q;
+                if (temperature > 337.8) {
+                    temperature = 337.8;
+                }
+            } else if (Math.abs(temperature - 337.8) < 0.1) {
+                // Latent heat absorption stalls temperature exactly at 337.8 °C
+                if (Q > 0 && dishSolid > 0) {
+                    // Sublimation is occurring
+                    let sublimationCoeff = 0.035 * burnerLevel;
+                    dishSolid = Math.max(0.0, dishSolid - sublimationCoeff);
+                    vaporDensity = Math.min(100.0, vaporDensity + sublimationCoeff * 1.8);
+                    
+                    // Spawn macro vapor particles in funnel
+                    if (Math.random() < 0.06 * burnerLevel) {
+                        vaporParticles.push(new VaporParticle());
+                    }
+                } else if (Q < 0) {
+                    // Cool down below sublimation point
+                    temperature += Q;
+                }
+                
+                // If dish is empty, temperature is free to rise higher
+                if (dishSolid <= 0) {
+                    temperature += Q;
+                }
+            } else if (temperature > 337.8) {
+                // Post-sublimation heating or stabilization
+                temperature += Q;
+                if (temperature < 337.8) {
+                    temperature = 337.8;
+                }
+            }
+
+            // Enforce bounds
+            if (temperature < 25.0) temperature = 25.0;
+            if (temperature > 380.0) temperature = 380.0;
+
+            // Vapor condensation/deposition inside funnel
+            if (vaporDensity > 0) {
+                // Vapors slowly settle and deposit, faster if cold
+                let coolingDeposition = (burnerLevel === 0) ? 0.08 : 0.03;
+                vaporDensity = Math.max(0.0, vaporDensity - coolingDeposition);
+            }
+
+            // Manage scrape button availability
+            if (funnelSolid > 1.0 && burnerLevel === 0) {
+                scrapeBtn.disabled = false;
+            } else {
+                scrapeBtn.disabled = true;
+            }
+
+            // Update rising vapors list
+            vaporParticles.forEach((vp, index) => {
+                vp.update();
+                if (vp.alpha <= 0) {
+                    vaporParticles.splice(index, 1);
+                }
+            });
+
+            // Update microscopic particles
+            microParticles.forEach(mp => mp.update());
+            
+            // Periodically replenish microscopic gas molecules in wall view to keep active
+            if (microscopeMode === 'wall' && Math.random() < 0.04 && microParticles.filter(p => p.state === 'gas').length < 8) {
+                let index = microParticles.length;
+                let type = index % 2 === 0 ? 'NH3' : 'HCl';
+                let p = new MicroParticle(type, -48, (Math.random() - 0.5) * 60, 'gas', index);
+                p.vx = 0.5 + Math.random() * 0.8;
+                p.vy = (Math.random() - 0.5) * 0.8;
+                microParticles.push(p);
+            }
+        }
+
+        // Narrate instructions and descriptions
+        function updateDialogue() {
+            if (burnerLevel === 0) {
+                if (temperature <= 25.1) {
+                    speakerBox.innerHTML = "Bunsen burner is <strong>OFF</strong>. The Ammonium Chloride ($NH_4Cl$) is in a stable, crystalline solid state in the China dish at <strong>" + temperature.toFixed(1) + "°C</strong>. Set the burner slider to begin.";
+                } else if (temperature < 337.8) {
+                    speakerBox.innerHTML = "Heating stopped. The apparatus is cooling down towards room temperature. Current temperature: <strong>" + temperature.toFixed(1) + "°C</strong>.";
+                } else if (dishSolid <= 0) {
+                    speakerBox.innerHTML = "🏁 <strong>Experiment Complete!</strong> All solid has sublimated. White recrystallized crystals are stuck to the funnel walls. Since the burner is OFF, click <strong>Scrape & Collect Sublimate</strong> to retrieve the pure $NH_4Cl$!";
+                } else {
+                    speakerBox.innerHTML = "Cooling down. The remaining gases inside the funnel are depositing back onto the cooler glass walls. Temperature: <strong>" + temperature.toFixed(1) + "°C</strong>.";
+                }
+                return;
+            }
+
+            if (temperature < 337.8) {
+                speakerBox.innerHTML = "🔥 <strong>Active Heating:</strong> Thermal energy is transferred. Ammonium Chloride particles absorb heat, causing their ionic lattice to <strong>vibrate violently</strong>. Current temperature: <strong>" + temperature.toFixed(1) + "°C</strong>. Sublimation will begin at <strong>337.8°C</strong>.";
+            } else if (Math.abs(temperature - 337.8) < 0.15) {
+                if (dishSolid > 0) {
+                    speakerBox.innerHTML = "⚡ <strong>LATENT HEAT OF SUBLIMATION!</strong> The thermometer is stalled at <strong>337.8°C</strong>. The supplied heat is NOT raising the temperature. Instead, it is being used to completely break the ionic bonds, directly sublimating solid $NH_4Cl$ into ammonia ($NH_3$) and hydrogen chloride ($HCl$) gases!";
+                } else {
+                    speakerBox.innerHTML = "💨 <strong>All solid has sublimated!</strong> The evaporating dish is empty. Vapors continue to drift and deposit. Turn off the burner to allow the sublimate to cool and stabilize.";
+                }
+            } else {
+                speakerBox.innerHTML = "🌡️ <strong>Empty Heating:</strong> No solid is left to absorb latent heat, so the temperature in the evaporating dish rises above the sublimation point: <strong>" + temperature.toFixed(1) + "°C</strong>. Turn OFF the burner to finish the experiment.";
+            }
+        }
+
+        // Draw animated flames on Bunsen burner nozzle
+        function drawFlames(bx, by, bWidth) {
+            if (burnerLevel === 0) return;
+
+            let flameHeight = burnerLevel === 1 ? 14 : (burnerLevel === 2 ? 26 : 38);
+            let colorCore = burnerLevel === 3 ? '#e0f2fe' : '#38bdf8'; // Hot white core, cyan outer
+            let colorOuter = burnerLevel === 1 ? '#ea580c' : '#2563eb'; // orange for low, deep blue for high
+
+            ctx.save();
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = colorOuter;
+
+            // Outer flame cone
+            ctx.fillStyle = colorOuter;
+            ctx.beginPath();
+            ctx.moveTo(bx - 10, by);
+            for (let i = -10; i <= bWidth + 10; i += 6) {
+                let jitter = Math.sin(flameTime + i) * (4 * (burnerLevel / 3));
+                let h = flameHeight + jitter;
+                ctx.lineTo(bx + i, by - h);
+            }
+            ctx.lineTo(bx + bWidth + 10, by);
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner hot core cone
+            ctx.fillStyle = colorCore;
+            ctx.beginPath();
+            ctx.moveTo(bx - 3, by);
+            for (let i = -3; i <= bWidth + 3; i += 4) {
+                let jitter = Math.cos(flameTime * 1.4 + i) * 2;
+                let h = (flameHeight * 0.55) + jitter;
+                ctx.lineTo(bx + i, by - h);
+            }
+            ctx.lineTo(bx + bWidth + 3, by);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw the full laboratory bench apparatus
+        function drawApparatus() {
+            // 1. Draw Tripod Stand legs (placed in background)
+            ctx.save();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 5;
+            
+            // Left leg
+            ctx.beginPath();
+            ctx.moveTo(cx - 52, 195);
+            ctx.lineTo(cx - 85, 320);
+            ctx.stroke();
+
+            // Right leg
+            ctx.beginPath();
+            ctx.moveTo(cx + 52, 195);
+            ctx.lineTo(cx + 85, 320);
+            ctx.stroke();
+
+            // Middle leg (back perspective)
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(cx, 195);
+            ctx.lineTo(cx, 315);
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Bunsen Burner body
+            ctx.save();
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(cx - 26, 305, 52, 15); // stand plate base
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(cx - 6, 255, 12, 50); // barrel cylinder
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(cx - 9, 250, 18, 6);  // brass burner nozzle head
+            ctx.restore();
+
+            // Draw Bunsen burner flames
+            drawFlames(cx - 9, 250, 18);
+
+            // 3. Draw Tripod Ring Plate & Wire Gauze
+            ctx.save();
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(cx - 75, 193, 150, 6); // Tripod upper collar ring
+
+            // Wire Gauze mesh texture representation
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            for (let mx = cx - 70; mx <= cx + 70; mx += 6) {
+                ctx.beginPath();
+                ctx.moveTo(mx, 192);
+                ctx.lineTo(mx, 195);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // 4. Draw China Dish (White ceramic bowl) sitting on wire gauze
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, 182, 35, 0.1 * Math.PI, 0.9 * Math.PI, false); // curved bottom bowl contour
+            ctx.lineTo(cx - 38, 178); // left flat rim
+            ctx.lineTo(cx + 38, 178); // right flat rim
+            ctx.closePath();
+            ctx.fillStyle = '#f8fafc'; // White ceramic color
+            ctx.strokeStyle = '#94a3b8'; // grey shade
+            ctx.lineWidth = 2.5;
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 5. Draw solid Ammonium Chloride powder inside the China dish
+            if (dishSolid > 0) {
+                ctx.save();
+                ctx.beginPath();
+                let powderHeight = 14 * (dishSolid / 100);
+                // Draw dynamic boundary representing solid quantity left
+                ctx.arc(cx, 182, 33, 0.15 * Math.PI, 0.85 * Math.PI, false);
+                ctx.lineTo(cx - 30, 191 - powderHeight);
+                ctx.quadraticCurveTo(cx, 190 - powderHeight + (Math.sin(flameTime * 0.1) * 0.4), cx + 30, 191 - powderHeight);
+                ctx.closePath();
+                ctx.fillStyle = '#ffffff'; // White solid powder
+                ctx.fill();
+
+                // Draw solid particle textures/specks
+                ctx.fillStyle = '#cbd5e1';
+                for (let i = 0; i < 6; i++) {
+                    let speckX = cx - 18 + (i * 6) + Math.sin(i * 10) * 2;
+                    let speckY = 193 - powderHeight + Math.cos(i * 5) * 3;
+                    if (speckX > cx - 28 && speckX < cx + 28) {
+                        ctx.fillRect(speckX, speckY, 1.2, 1.2);
+                    }
+                }
+                ctx.restore();
+            }
+
+            // Draw active rising vapor smoke particles
+            vaporParticles.forEach(vp => vp.draw());
+
+            // 6. Draw Inverted Glass Funnel placed over the China dish
+            // Dimensions: Rim at Y=188, slope neck at Y=120, top stem nozzle at Y=55
+            ctx.save();
+            ctx.strokeStyle = 'rgba(203, 213, 225, 0.65)';
+            ctx.fillStyle = 'rgba(147, 197, 253, 0.04)'; // Faint translucent glass blue tint
+            ctx.lineWidth = 2.0;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx - 45, 188); // rim left
+            ctx.lineTo(cx - 7, 120);  // neck slope left
+            ctx.lineTo(cx - 6, 120);
+            ctx.lineTo(cx - 6, 55);   // stem straight nozzle left
+            ctx.lineTo(cx + 6, 55);   // stem straight nozzle right
+            ctx.lineTo(cx + 6, 120);
+            ctx.lineTo(cx + 7, 120);  // neck slope right
+            ctx.lineTo(cx + 45, 188); // rim right
+            ctx.lineTo(cx - 45, 188);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glass highlight shine lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(cx - 39, 183);
+            ctx.lineTo(cx - 10, 124);
+            ctx.stroke();
+            ctx.restore();
+
+            // 7. Draw Deposited Sublimate (re-crystallized white crust) on upper walls
+            if (funnelSolid > 0) {
+                ctx.save();
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 0.8;
+
+                let maxThickness = 6.0;
+                let thickness = maxThickness * (funnelSolid / 100);
+
+                // Left sloped wall deposit
+                ctx.beginPath();
+                ctx.moveTo(cx - 43, 185);
+                ctx.lineTo(cx - 8, 122);
+                // Add jagged crystal contour
+                for (let y = 122; y <= 185; y += 7) {
+                    let progress = (185 - y) / 63;
+                    let wx = (cx - 43) + progress * 35; // base sloped x position
+                    let jitter = Math.sin(y * 0.6 + flameTime * 0.08) * 0.6;
+                    ctx.lineTo(wx + thickness + jitter, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Right sloped wall deposit
+                ctx.beginPath();
+                ctx.moveTo(cx + 43, 185);
+                ctx.lineTo(cx + 8, 122);
+                // Add jagged crystal contour
+                for (let y = 122; y <= 185; y += 7) {
+                    let progress = (185 - y) / 63;
+                    let wx = (cx + 43) - progress * 35;
+                    let jitter = Math.cos(y * 0.6 - flameTime * 0.08) * 0.6;
+                    ctx.lineTo(wx - thickness - jitter, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Stem neck deposits (coolest region, deposits heavily)
+                let stemThickness = 3.2 * (funnelSolid / 100);
+                ctx.fillRect(cx - 6, 75, stemThickness, 45);
+                ctx.fillRect(cx + 6 - stemThickness, 75, stemThickness, 45);
+
+                ctx.restore();
+            }
+
+            // 8. Draw Cotton wool plug inside top funnel nozzle (stem Y=55 to Y=67)
+            ctx.save();
+            ctx.fillStyle = '#f1f5f9';
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.0;
+            
+            let cyy = 57;
+            ctx.beginPath();
+            ctx.arc(cx, cyy, 7, 0, Math.PI * 2);
+            ctx.arc(cx - 4, cyy - 2, 5, 0, Math.PI * 2);
+            ctx.arc(cx + 4, cyy - 1, 5.5, 0, Math.PI * 2);
+            ctx.arc(cx - 3, cyy + 3, 5, 0, Math.PI * 2);
+            ctx.arc(cx + 3, cyy + 2, 4.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 9. Draw Laboratory Suspended Thermometer monitoring funnel interior
+            ctx.save();
+            let thermX = cx;
+            let thermTop = 15;
+            let thermBottom = 115; // Bulb hangs in middle funnel area
+
+            // Glass stem column tube outline
+            ctx.strokeStyle = 'rgba(248, 250, 252, 0.75)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermTop);
+            ctx.lineTo(thermX, thermBottom);
+            ctx.stroke();
+
+            // Red bulb
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(thermX, thermBottom, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Red mercury level column
+            // Thermometer range: 25 °C to 380 °C
+            let tempPercent = (temperature - 25) / 355;
+            let levelY = thermBottom - 3 - tempPercent * (thermBottom - 3 - thermTop - 10);
+            
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermBottom - 2);
+            ctx.lineTo(thermX, levelY);
+            ctx.stroke();
+
+            // Thread loop holding it from top ceiling stand
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermTop);
+            ctx.lineTo(thermX, 0);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        // Draw telemetry panel on right side of Canvas
+        function drawTelemetry(xStart, yStart, width, height) {
+            // Background card panel
+            ctx.save();
+            ctx.fillStyle = 'rgba(21, 31, 50, 0.65)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.roundRect(xStart, yStart, width, height, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 1. Magnified Telemetry Thermometer
+            let scaleX = xStart + 35;
+            let scaleY = yStart + 20;
+            let scaleH = 240;
+
+            // Glass tube background
+            ctx.save();
+            ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+            ctx.fillStyle = '#090d16';
+            ctx.lineWidth = 12;
+            ctx.beginPath();
+            ctx.moveTo(scaleX, scaleY);
+            ctx.lineTo(scaleX, scaleY + scaleH);
+            ctx.stroke();
+
+            // Mercury bulb
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(scaleX, scaleY + scaleH + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Thermometer graduation marks (0 °C to 400 °C, step 50)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px monospace';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            for (let t = 0; t <= 400; t += 50) {
+                let ratio = t / 400;
+                let ty = scaleY + scaleH - ratio * scaleH;
+
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(scaleX - 6, ty);
+                ctx.lineTo(scaleX + 6, ty);
+                ctx.stroke();
+
+                ctx.fillText(t + "°C", scaleX - 10, ty);
+            }
+
+            // Rising red mercury column inside scale
+            let mercuryRatio = temperature / 400;
+            let mY = scaleY + scaleH - mercuryRatio * scaleH;
+
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 5.0;
+            ctx.beginPath();
+            ctx.moveTo(scaleX, scaleY + scaleH);
+            ctx.lineTo(scaleX, mY);
+            ctx.stroke();
+            ctx.restore();
+
+            // Digital temperature readout box
+            ctx.save();
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("TEMPERATURE", scaleX, scaleY + scaleH + 34);
+            ctx.font = 'bold 13px monospace';
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText(temperature.toFixed(1) + " °C", scaleX, scaleY + scaleH + 47);
+            ctx.restore();
+
+            // 2. Microscopic Inset Glass Circle
+            // Draw focus guidelines connecting circular inset to the physical area
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+            ctx.lineWidth = 1.2;
+            
+            if (microscopeMode === 'dish') {
+                // Focus points to Evaporating dish
+                ctx.beginPath();
+                ctx.moveTo(insetX - insetRadius, insetY);
+                ctx.lineTo(cx + 25, 184);
+                ctx.moveTo(insetX - 35, insetY + 38);
+                ctx.lineTo(cx - 25, 184);
+                ctx.stroke();
+            } else {
+                // Focus points to Funnel Wall sublimate
+                ctx.beginPath();
+                ctx.moveTo(insetX - insetRadius, insetY);
+                ctx.lineTo(cx + 25, 145);
+                ctx.moveTo(insetX - 35, insetY + 38);
+                ctx.lineTo(cx + 12, 125);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Circle window title
+            ctx.save();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(microscopeMode === 'dish' ? "DISPLACEMENT VIEW (DISH)" : "RECOMBINATION VIEW (WALL)", insetX, insetY - insetRadius - 12);
+            ctx.restore();
+
+            // Microscopic glass circle base window
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(insetX, insetY, insetRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#020617';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 4.0;
+            ctx.fill();
+            ctx.stroke();
+
+            // Glass reflection gradient sheen
+            let glassSheen = ctx.createLinearGradient(insetX - insetRadius, insetY - insetRadius, insetX + insetRadius, insetY + insetRadius);
+            glassSheen.addColorStop(0, 'rgba(255, 255, 255, 0.09)');
+            glassSheen.addColorStop(0.4, 'rgba(255, 255, 255, 0.01)');
+            glassSheen.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+            ctx.fillStyle = glassSheen;
+            ctx.fill();
+            ctx.restore();
+
+            // Render spring chemical bonds between solid lattice elements
+            ctx.save();
+            ctx.strokeStyle = 'rgba(192, 132, 252, 0.18)'; // faint purple/blue bonds
+            ctx.lineWidth = 1.0;
+            
+            for (let i = 0; i < microParticles.length; i++) {
+                for (let j = i + 1; j < microParticles.length; j++) {
+                    let p1 = microParticles[i];
+                    let p2 = microParticles[j];
+
+                    if (p1.state === 'bonded' && p2.state === 'bonded') {
+                        let dx = p2.x - p1.x;
+                        let dy = p2.y - p1.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        // Neighbor bond link (typical lattice coordinate distance)
+                        if (dist < 14) {
+                            ctx.beginPath();
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            ctx.restore();
+
+            // Update & Draw microscopic particles
+            microParticles.forEach(mp => mp.draw());
+            
+            // Draw deposition spark flashes
+            updateAndDrawFlashes();
+
+            // 3. Quantitative Stats displays
+            let statY = yStart + 175;
+            ctx.save();
+            ctx.textAlign = 'center';
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillText("CHEMICAL PHASE STATE", insetX, statY);
+
+            // Phase indicator badge
+            let stateLabel = "SOLID LATTICE";
+            let stateColor = '#22d3ee';
+            
+            if (temperature >= 337.8) {
+                if (dishSolid > 0) {
+                    stateLabel = "SUBLIMATION (ACTIVE)";
+                    stateColor = '#facc15'; // Yellow warning transition
+                } else {
+                    stateLabel = "SUBLIMATION COMPLETE";
+                    stateColor = '#ef4444'; // Solid spent
+                }
+            } else if (temperature > 25.0 && burnerLevel === 0) {
+                stateLabel = "COOLING & DEPOSITION";
+                stateColor = '#a855f7'; // Purple cool crystallization
+            } else if (temperature > 25.0) {
+                stateLabel = "SOLID (HEATING)";
+                stateColor = '#38bdf8';
+            }
+
+            ctx.fillStyle = stateColor;
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(stateLabel, insetX, statY + 16);
+
+            // Progress Bar 1: Sublimation (Dish Solid Consumed)
+            let subProgress = 100.0 - dishSolid;
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText("SUBLIMATED (DISH):", insetX - 48, statY + 38);
+
+            let pbX = insetX - 48;
+            let pbY = statY + 44;
+            let pbW = 96;
+            let pbH = 6;
+
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(pbX, pbY, pbW, pbH);
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.7)'; // Red consumed
+            ctx.fillRect(pbX + 1, pbY + 1, (pbW - 2) * (subProgress / 100), pbH - 2);
+            
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(Math.floor(subProgress) + "%", insetX + 48, statY + 38);
+
+            // Progress Bar 2: Deposition (Wall Sublimate Growing)
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText("DEPOSITED (WALL):", insetX - 48, statY + 62);
+
+            let pbY2 = statY + 68;
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(pbX, pbY2, pbW, pbH);
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.7)'; // Green formed
+            ctx.fillRect(pbX + 1, pbY2 + 1, (pbW - 2) * (funnelSolid / 100), pbH - 2);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(Math.floor(funnelSolid) + "%", insetX + 48, statY + 62);
+
+            ctx.restore();
+        }
+
+        // Master Render loop
+        function updateAndRender() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw telemetry panel background & stats
+            drawTelemetry(425, 15, 230, 310);
+
+            // 2. Draw laboratory experiment setup (stand, Bunsen burner, dish, funnel, cotton, thermometer)
+            drawApparatus();
+
+            // Run physics solver
+            updatePhysics();
+
+            requestAnimationFrame(updateAndRender);
+        }
+
+        // Initialize variables & launch loop
+        resetLab();
+        updateAndRender();
+    </script>
+</body>
+</html>

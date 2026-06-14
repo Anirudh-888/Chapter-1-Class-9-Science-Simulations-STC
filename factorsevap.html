@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Lab - Factors Affecting Evaporation</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-cyan: #22d3ee;
+            --stc-orange: #f97316;
+            --stc-red: #ef4444;
+            --stc-blue: #3b82f6;
+            --stc-green: #10b981;
+            --stc-purple: #c084fc;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .viewport-container {
+            position: relative;
+            background: #020617;
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .race-control-panel {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid var(--border-ui);
+            padding-bottom: 15px;
+        }
+
+        .race-btn {
+            background: linear-gradient(135deg, var(--stc-orange), var(--stc-red));
+            border: none;
+            color: white;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .race-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+
+        .race-btn:disabled {
+            opacity: 0.4;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            background: #273549;
+            border-color: #cbd5e1;
+        }
+
+        .dual-columns {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .control-column {
+            flex: 1;
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-column.side-a h3 {
+            color: var(--stc-cyan);
+        }
+
+        .control-column.side-b h3 {
+            color: var(--stc-purple);
+        }
+
+        .control-column h3 {
+            margin: 0 0 5px 0;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .control-element {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.82rem;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .side-a .interactive-slider::-webkit-slider-thumb {
+            background: var(--stc-cyan);
+            box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+        }
+
+        .side-b .interactive-slider::-webkit-slider-thumb {
+            background: var(--stc-purple);
+            box-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
+        }
+
+        .interactive-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .toggle-group {
+            display: flex;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            border-radius: 6px;
+            overflow: hidden;
+            padding: 1px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            border-radius: 5px;
+        }
+
+        .side-a .toggle-btn.active {
+            background: var(--panel-bg);
+            color: var(--stc-cyan);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        .side-b .toggle-btn.active {
+            background: var(--panel-bg);
+            color: var(--stc-purple);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .speech-text strong {
+            color: var(--stc-yellow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="header-container">
+            <h1>Evaporation Factors: Side-by-Side Drying Race</h1>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="raceCanvas" width="670" height="340"></canvas>
+        </div>
+
+        <div class="race-control-panel">
+            <button class="race-btn" id="startBtn" onclick="startRace()">🏁 Start Drying Race</button>
+            <button class="reset-btn" onclick="resetLab()">🔄 Reset Clothes</button>
+        </div>
+
+        <div class="dual-columns">
+            <!-- System A controls -->
+            <div class="control-column side-a" id="panelA">
+                <h3>Clothesline A (Left Track)</h3>
+                
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🧪 SURFACE AREA (FOLDING):</span>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="areaSpreadABtn" class="toggle-btn active" onclick="setArea('A', 'spread')">Spread Out</button>
+                        <button id="areaFoldABtn" class="toggle-btn" onclick="setArea('A', 'folded')">Folded/Crumpled</button>
+                    </div>
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🌡️ TEMPERATURE:</span>
+                        <span id="tempBadgeA" style="color:var(--stc-cyan);">25°C</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="tempSliderA" min="15" max="45" value="25" oninput="handleSlider('A', 'temp', this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💨 WIND SPEED:</span>
+                        <span id="windBadgeA" style="color:var(--stc-cyan);">OFF</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="windSliderA" min="0" max="3" value="0" oninput="handleSlider('A', 'wind', this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💧 HUMIDITY:</span>
+                        <span id="humidBadgeA" style="color:var(--stc-cyan);">50%</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="humidSliderA" min="10" max="90" value="50" step="5" oninput="handleSlider('A', 'humid', this.value)">
+                </div>
+            </div>
+
+            <!-- System B controls -->
+            <div class="control-column side-b" id="panelB">
+                <h3>Clothesline B (Right Track)</h3>
+                
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🧪 SURFACE AREA (FOLDING):</span>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="areaSpreadBBtn" class="toggle-btn active" onclick="setArea('B', 'spread')">Spread Out</button>
+                        <button id="areaFoldBBtn" class="toggle-btn" onclick="setArea('B', 'folded')">Folded/Crumpled</button>
+                    </div>
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🌡️ TEMPERATURE:</span>
+                        <span id="tempBadgeB" style="color:var(--stc-purple);">25°C</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="tempSliderB" min="15" max="45" value="25" oninput="handleSlider('B', 'temp', this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💨 WIND SPEED:</span>
+                        <span id="windBadgeB" style="color:var(--stc-purple);">OFF</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="windSliderB" min="0" max="3" value="0" oninput="handleSlider('B', 'wind', this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💧 HUMIDITY:</span>
+                        <span id="humidBadgeB" style="color:var(--stc-purple);">50%</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="humidSliderB" min="10" max="90" value="50" step="5" oninput="handleSlider('B', 'humid', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Lab Assistant:</div>
+            <div id="speakerBox" class="speech-text">Configure the environmental sliders for both Clothesline systems, then click <strong>Start Drying Race</strong> to see the factors in action!</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('raceCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const startBtn = document.getElementById('startBtn');
+
+        // Track Parameters for System A and System B
+        const tracks = {
+            A: {
+                area: 'spread',
+                temp: 25,
+                wind: 0,
+                humid: 50,
+                progress: 0.0, // 0 to 100% dried
+                timeElapsed: 0.0,
+                isCompleted: false,
+                color: '#22d3ee', // Cyan
+                badgeColor: 'var(--stc-cyan)',
+                cx: 167 // center X of Left track
+            },
+            B: {
+                area: 'spread',
+                temp: 25,
+                wind: 0,
+                humid: 50,
+                progress: 0.0,
+                timeElapsed: 0.0,
+                isCompleted: false,
+                color: '#c084fc', // Purple
+                badgeColor: 'var(--stc-purple)',
+                cx: 502 // center X of Right track
+            }
+        };
+
+        // State control
+        let raceActive = false;
+        let raceFinished = false;
+        let time = 0;
+        let rainParticles = [];
+        let windParticles = [];
+        let vaporParticles = [];
+
+        // Visual Layout Constants
+        const cyLine = 145; // Clothesline Y coordinate
+        const cyGround = 280; // Ground Y coordinate
+
+        // Particles classes
+        class RainDrop {
+            constructor(trackKey) {
+                this.trackKey = trackKey;
+                let t = tracks[trackKey];
+                this.x = t.cx - 150 + Math.random() * 300;
+                this.y = -10 - Math.random() * 20;
+                this.vy = 4 + Math.random() * 3;
+                this.vx = (Math.random() - 0.5) * 0.5;
+            }
+            update() {
+                this.y += this.vy;
+                this.x += this.vx;
+                
+                // Add wind drift
+                let t = tracks[this.trackKey];
+                this.x += t.wind * 0.8;
+            }
+            draw() {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+                ctx.lineWidth = 1.0;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + tracks[this.trackKey].wind * 0.4, this.y + 7);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class WindLine {
+            constructor(trackKey) {
+                this.trackKey = trackKey;
+                let t = tracks[trackKey];
+                this.x = t.cx - 170;
+                this.y = 80 + Math.random() * 160;
+                this.speed = 4 + t.wind * 2.8;
+                this.length = 35 + Math.random() * 30;
+                this.alpha = 0.08 + Math.random() * 0.12;
+            }
+            update() {
+                this.x += this.speed;
+            }
+            draw() {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(34, 211, 238, ' + this.alpha + ')';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.bezierCurveTo(this.x + this.length/3, this.y - 3, this.x + 2*this.length/3, this.y + 3, this.x + this.length, this.y);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class VaporParticle {
+            constructor(trackKey, x, y) {
+                this.trackKey = trackKey;
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = -0.3 - Math.random() * 0.5;
+                this.radius = 3 + Math.random() * 3;
+                this.alpha = 0.4;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.008;
+                this.radius += 0.08;
+                
+                // Drift in wind
+                let t = tracks[this.trackKey];
+                this.x += t.wind * 0.4;
+            }
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.fillStyle = 'rgba(241, 245, 249, ' + this.alpha + ')';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Area toggle button handlers
+        function setArea(trackKey, mode) {
+            if (raceActive) return;
+            let t = tracks[trackKey];
+            t.area = mode;
+
+            let spreadBtn = document.getElementById('areaSpread' + trackKey + 'Btn');
+            let foldBtn = document.getElementById('areaFold' + trackKey + 'Btn');
+
+            if (mode === 'spread') {
+                spreadBtn.classList.add('active');
+                foldBtn.classList.remove('active');
+            } else {
+                spreadBtn.classList.remove('active');
+                foldBtn.classList.add('active');
+            }
+        }
+
+        // Slider handlers
+        function handleSlider(trackKey, type, val) {
+            if (raceActive) {
+                // Revert slide input during active race
+                let slider = document.getElementById(type + 'Slider' + trackKey);
+                slider.value = tracks[trackKey][type];
+                return;
+            }
+
+            let t = tracks[trackKey];
+            let parsedVal = parseInt(val);
+            t[type] = parsedVal;
+
+            // Update badge text labels
+            let badge = document.getElementById(type + 'Badge' + trackKey);
+            if (type === 'temp') {
+                badge.innerText = parsedVal + "°C";
+            } else if (type === 'wind') {
+                const labels = ["OFF", "LOW", "MEDIUM", "HIGH"];
+                badge.innerText = labels[parsedVal];
+            } else if (type === 'humid') {
+                badge.innerText = parsedVal + "%";
+            }
+        }
+
+        // Start Drying race button
+        function startRace() {
+            if (raceFinished) {
+                resetLab();
+            }
+            raceActive = true;
+            startBtn.disabled = true;
+            speakerBox.innerHTML = "🏁 <strong>Race in progress!</strong> Observe how the temperature, wind, humidity, and surface area affect the drying speed of both clothes.";
+        }
+
+        // Reset clothes wetness
+        function resetLab() {
+            raceActive = false;
+            raceFinished = false;
+            startBtn.disabled = false;
+            startBtn.innerText = "🏁 Start Drying Race";
+
+            tracks.A.progress = 0.0;
+            tracks.A.timeElapsed = 0.0;
+            tracks.A.isCompleted = false;
+
+            tracks.B.progress = 0.0;
+            tracks.B.timeElapsed = 0.0;
+            tracks.B.isCompleted = false;
+
+            rainParticles = [];
+            windParticles = [];
+            vaporParticles = [];
+
+            speakerBox.innerHTML = "Configure the environmental sliders for both Clothesline systems, then click <strong>Start Drying Race</strong> to see the factors in action!";
+        }
+
+        // Physical updates
+        function updatePhysics() {
+            time++;
+
+            // 1. Spawning environmental overlays
+            Object.keys(tracks).forEach(key => {
+                let t = tracks[key];
+
+                // Rain drops if humidity is high
+                if (t.humid > 55 && Math.random() < (t.humid - 55) * 0.008) {
+                    rainParticles.push(new RainDrop(key));
+                }
+
+                // Wind breeze lines
+                if (t.wind > 0 && Math.random() < t.wind * 0.08) {
+                    windParticles.push(new WindLine(key));
+                }
+
+                // Rising vapor off the shirt (representing active drying evaporation)
+                if (raceActive && !t.isCompleted && t.progress < 100) {
+                    let rate = calculateDryingRate(key);
+                    if (Math.random() < rate * 25) {
+                        // Spawn vapor near the shirt coordinates
+                        let sx = t.cx + (Math.random() - 0.5) * (t.area === 'spread' ? 36 : 14);
+                        let sy = cyLine + 25 + Math.random() * 25;
+                        
+                        // Apply sway offset
+                        let swayAngle = Math.sin(time * 0.12 * t.wind + (key === 'A' ? 0 : 2)) * (t.wind * 4.5);
+                        let rad = swayAngle * Math.PI / 180;
+                        let rx = t.cx + (sx - t.cx) * Math.cos(rad) - (sy - cyLine - 10) * Math.sin(rad);
+                        let ry = cyLine + 10 + (sx - t.cx) * Math.sin(rad) + (sy - cyLine - 10) * Math.cos(rad);
+
+                        vaporParticles.push(new VaporParticle(key, rx, ry));
+                    }
+                }
+            });
+
+            // Update wind lines
+            windParticles.forEach((wp, index) => {
+                wp.update();
+                let limit = tracks[wp.trackKey].cx + 170;
+                if (wp.x > limit) {
+                    windParticles.splice(index, 1);
+                }
+            });
+
+            // Update rain drops
+            rainParticles.forEach((rd, index) => {
+                rd.update();
+                if (rd.y > cyGround) {
+                    rainParticles.splice(index, 1);
+                }
+            });
+
+            // Update vapors
+            vaporParticles.forEach((vp, index) => {
+                vp.update();
+                if (vp.alpha <= 0) {
+                    vaporParticles.splice(index, 1);
+                }
+            });
+
+            // 2. Race thermodynamic math solver
+            if (raceActive) {
+                let bothDone = true;
+
+                Object.keys(tracks).forEach(key => {
+                    let t = tracks[key];
+                    if (!t.isCompleted) {
+                        bothDone = false;
+                        t.timeElapsed += 1 / 60; // count seconds
+
+                        // Calculate drying speed factors
+                        let rate = calculateDryingRate(key);
+                        t.progress = Math.min(100.0, t.progress + rate * 0.4);
+
+                        if (t.progress >= 100.0) {
+                            t.isCompleted = true;
+                            t.progress = 100.0;
+                        }
+                    }
+                });
+
+                if (bothDone && !raceFinished) {
+                    raceFinished = true;
+                    raceActive = false;
+                    startBtn.disabled = false;
+                    startBtn.innerText = "🏁 Restart Race";
+                    announceWinner();
+                }
+            }
+        }
+
+        // Drying Rate equation (CBSE Class 9 factors)
+        function calculateDryingRate(key) {
+            let t = tracks[key];
+            
+            // 1. Surface Area
+            let areaFactor = t.area === 'spread' ? 1.0 : 0.38;
+
+            // 2. Temperature (molecules speed up)
+            let tempFactor = 0.5 + (t.temp - 15) * 0.04; // scales from 0.5 to 1.7
+
+            // 3. Wind speed (sweeps vapor away)
+            let windFactor = 1.0 + t.wind * 0.45; // scales from 1.0 to 2.35
+
+            // 4. Humidity (saturation slows down evaporation)
+            let humidFactor = 1.15 - (t.humid / 100.0); // scales from 1.05 down to 0.25
+
+            // Evaporation rate formula combining all factors
+            return areaFactor * tempFactor * windFactor * humidFactor * 0.12;
+        }
+
+        // Announce race winner details
+        function announceWinner() {
+            let tA = tracks.A.timeElapsed;
+            let tB = tracks.B.timeElapsed;
+
+            let analysis = "";
+            if (Math.abs(tA - tB) < 0.1) {
+                analysis = "🏆 <strong>It's a TIE!</strong> Both t-shirts dried in exactly <strong>" + tA.toFixed(1) + " seconds</strong> because their evaporation factor math matched.";
+            } else {
+                let winner = tA < tB ? "Clothesline A" : "Clothesline B";
+                let winTime = tA < tB ? tA : tB;
+                let loseTime = tA < tB ? tB : tA;
+                let ratio = loseTime / winTime;
+
+                analysis = "🏆 <strong>" + winner + " WINS THE RACE!</strong> It dried in <strong>" + winTime.toFixed(1) + "s</strong>, which is <strong>" + ratio.toFixed(1) + "x faster</strong> than the other clothesline (<strong>" + loseTime.toFixed(1) + "s</strong>).<br>";
+                
+                // Explain the winning factors
+                let wKey = tA < tB ? 'A' : 'B';
+                let lKey = tA < tB ? 'B' : 'A';
+                let win = tracks[wKey];
+                let lose = tracks[lKey];
+
+                let factorsList = [];
+                if (win.area === 'spread' && lose.area === 'folded') {
+                    factorsList.push("having a <strong>larger surface area</strong> (clothes spread out exposed more water molecules)");
+                }
+                if (win.temp > lose.temp) {
+                    factorsList.push("a <strong>higher temperature</strong> (which gives molecules more kinetic energy to escape)");
+                }
+                if (win.wind > lose.wind) {
+                    factorsList.push("a <strong>faster wind speed</strong> (sweeping vapor away immediately)");
+                }
+                if (win.humid < lose.humid) {
+                    factorsList.push("<strong>lower humidity</strong> (allowing dry air to take in moisture much faster)");
+                }
+
+                if (factorsList.length > 0) {
+                    analysis += "This was achieved due to: " + factorsList.join(", ") + ".";
+                }
+            }
+
+            speakerBox.innerHTML = analysis;
+        }
+
+        // Helper to blend colors from Wet (navy blue) to Dry (sky blue)
+        function blendWetDryColor(ratio, baseColor) {
+            // Wet color: dark navy #1e3a8a (RGB: 30, 58, 138)
+            // Dry color: base color (Cyan: 34, 211, 238 or Purple: 192, 132, 252)
+            let rStart = 30, gStart = 58, bStart = 138;
+            let rEnd, gEnd, bEnd;
+            if (baseColor === 'A') {
+                rEnd = 34; gEnd = 211; bEnd = 238; // Cyan
+            } else {
+                rEnd = 192; gEnd = 132; bEnd = 252; // Purple
+            }
+
+            let r = Math.round(rStart + (rEnd - rStart) * ratio);
+            let g = Math.round(gStart + (gEnd - gStart) * ratio);
+            let b = Math.round(bStart + (bEnd - bStart) * ratio);
+
+            return "rgb(" + r + "," + g + "," + b + ")";
+        }
+
+        // Render the t-shirt shape
+        function drawTShirt(ctx, mode, progress, key) {
+            ctx.save();
+            let ratio = progress / 100.0;
+            ctx.fillStyle = blendWetDryColor(ratio, key);
+            ctx.strokeStyle = progress >= 100 ? '#ffffff' : 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1.2;
+
+            if (mode === 'spread') {
+                // Large Spread Out T-Shirt path
+                ctx.beginPath();
+                ctx.moveTo(-11, 0); // Neck left
+                ctx.quadraticCurveTo(0, 3, 11, 0); // Neck scoop
+                ctx.lineTo(20, 6); // Right shoulder
+                ctx.lineTo(29, 16); // Right sleeve top
+                ctx.lineTo(24, 25); // Right sleeve cuff
+                ctx.lineTo(15, 21); // Underarm right
+                ctx.lineTo(15, 42); // Waist right
+                ctx.lineTo(-15, 42); // Waist left
+                ctx.lineTo(-15, 21); // Underarm left
+                ctx.lineTo(-24, 25); // Left sleeve cuff
+                ctx.lineTo(-29, 16); // Left sleeve top
+                ctx.lineTo(-20, 6); // Left shoulder
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw hanger clamp clothes pegs
+                ctx.fillStyle = '#b45309'; // wooden peg color
+                ctx.fillRect(-14, -3, 3, 6);
+                ctx.fillRect(11, -3, 3, 6);
+            } else {
+                // Folded / Crumpled shirt (smaller, narrower, irregular boundaries)
+                ctx.beginPath();
+                ctx.moveTo(-5, 0);
+                ctx.quadraticCurveTo(0, 2, 5, 0);
+                ctx.lineTo(10, 10);
+                ctx.lineTo(7, 24);
+                ctx.lineTo(3, 39);
+                ctx.lineTo(-3, 39);
+                ctx.lineTo(-7, 24);
+                ctx.lineTo(-10, 10);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Crumple wrinkle lines
+                ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath();
+                ctx.moveTo(-4, 10); ctx.lineTo(4, 15);
+                ctx.moveTo(-3, 22); ctx.lineTo(3, 18);
+                ctx.moveTo(-2, 30); ctx.lineTo(2, 33);
+                ctx.stroke();
+
+                // Single peg
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(-1.5, -3, 3, 6);
+            }
+            ctx.restore();
+        }
+
+        // Draw outdoor scene and weather for a track
+        function drawTrackBackground(key, startX, width) {
+            let t = tracks[key];
+
+            // 1. Sky Color Gradient (Humid/Rainy sky is grey, dry sky is dark blue)
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, cyGround);
+            
+            // Interpolate colors based on humidity
+            let hr = t.humid / 100.0; // humidity ratio
+            let rTop = Math.round(2 + hr * 24);
+            let gTop = Math.round(6 + hr * 35);
+            let bTop = Math.round(23 + hr * 40);
+
+            let rBot = Math.round(15 + hr * 36);
+            let gBot = Math.round(23 + hr * 48);
+            let bBot = Math.round(42 + hr * 40);
+
+            skyGrad.addColorStop(0, "rgb(" + rTop + "," + gTop + "," + bTop + ")");
+            skyGrad.addColorStop(1, "rgb(" + rBot + "," + gBot + "," + bBot + ")");
+            
+            ctx.save();
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(startX, 0, width, cyGround);
+
+            // Draw rain cloud at the top if humidity is very high (> 60)
+            if (t.humid > 60) {
+                let cloudAlpha = (t.humid - 60) / 30 * 0.3;
+                ctx.fillStyle = 'rgba(71, 85, 105, ' + cloudAlpha + ')';
+                ctx.beginPath();
+                ctx.ellipse(t.cx, 25, 110, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 2. Draw Ground (green grass)
+            let grassGrad = ctx.createLinearGradient(0, cyGround, 0, canvas.height);
+            grassGrad.addColorStop(0, '#15803d'); // bright grass
+            grassGrad.addColorStop(1, '#14532d');
+            ctx.fillStyle = grassGrad;
+            ctx.fillRect(startX, cyGround, width, canvas.height - cyGround);
+            ctx.restore();
+
+            // 3. Draw Sunlight Sun
+            // Temperature increases sun size and animated radiating heat rings
+            ctx.save();
+            ctx.shadowBlur = 10 + (t.temp - 15) * 1.5;
+            ctx.shadowColor = '#eab308';
+            ctx.fillStyle = '#facc15';
+
+            let sunX = t.cx - 100;
+            let sunY = 32;
+            let sunR = 8 + (t.temp / 45) * 8;
+            
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun heat rings
+            if (t.temp > 25) {
+                let ringAlpha = (t.temp - 25) / 20 * 0.15;
+                ctx.strokeStyle = 'rgba(253, 224, 71, ' + ringAlpha + ')';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, sunR + 5 + Math.sin(time * 0.08) * 2, 0, Math.PI * 2);
+                ctx.arc(sunX, sunY, sunR + 12 + Math.cos(time * 0.06) * 3, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // Draw structures (post, line, progress)
+        function drawTrackApparatus(key) {
+            let t = tracks[key];
+            let post1X = t.cx - 75;
+            let post2X = t.cx + 75;
+
+            ctx.save();
+            // 1. Draw Wooden Posts
+            ctx.fillStyle = '#854d0e'; // brown post
+            ctx.fillRect(post1X - 3, 115, 6, 165);
+            ctx.fillRect(post2X - 3, 115, 6, 165);
+            
+            // Post caps
+            ctx.fillStyle = '#a16207';
+            ctx.fillRect(post1X - 5, 110, 10, 5);
+            ctx.fillRect(post2X - 5, 110, 10, 5);
+
+            // 2. Draw sagging clothesline (between Y=125 posts to Y=133 center)
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(post1X, 125);
+            ctx.quadraticCurveTo(t.cx, 134, post2X, 125);
+            ctx.stroke();
+
+            // 3. Draw hanging T-shirt with wind sway physics
+            let swayAngle = Math.sin(time * 0.12 * t.wind + (key === 'A' ? 0 : 2.5)) * (t.wind * 4.5);
+            // Wind speed adds a static offset tilt to the right
+            let windTilt = t.wind * 3.0; 
+            let totalAngle = windTilt + swayAngle;
+
+            ctx.save();
+            ctx.translate(t.cx, 133); // translate to shirt attachment center point
+            ctx.rotate(totalAngle * Math.PI / 180);
+            drawTShirt(ctx, t.area, t.progress, key);
+            ctx.restore();
+
+            // 4. Progress bar and Digital status display above posts
+            let pbY = 75;
+            let pbW = 100;
+            let pbH = 6;
+            let pbX = t.cx - pbW / 2;
+
+            // Progress bar
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(pbX, pbY, pbW, pbH);
+            ctx.fillStyle = t.progress >= 100.0 ? '#10b981' : t.color;
+            ctx.fillRect(pbX + 1, pbY + 1, (pbW - 2) * (t.progress / 100.0), pbH - 2);
+
+            // Text
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 8px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(t.progress.toFixed(0) + "% DRY", t.cx, pbY - 5);
+
+            // Timer display
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8.5px monospace';
+            ctx.fillText("Time: " + t.timeElapsed.toFixed(1) + "s", t.cx, pbY + 20);
+
+            // Completed badge
+            if (t.isCompleted) {
+                ctx.fillStyle = '#10b981';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillText("✓ DRY", t.cx, pbY + 33);
+            }
+            ctx.restore();
+        }
+
+        // Master Render loop
+        function updateAndRender() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Left Track (System A) Background
+            drawTrackBackground('A', 0, 335);
+
+            // 2. Draw Right Track (System B) Background
+            drawTrackBackground('B', 335, 335);
+
+            // 3. Draw center divider border
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3.0;
+            ctx.beginPath();
+            ctx.moveTo(335, 0);
+            ctx.lineTo(335, canvas.height);
+            ctx.stroke();
+
+            // 4. Draw wind lines
+            windParticles.forEach(wp => wp.draw());
+
+            // 5. Draw rain drops
+            rainParticles.forEach(rd => rd.draw());
+
+            // 6. Draw active vapors
+            vaporParticles.forEach(vp => vp.draw());
+
+            // 7. Draw clothesline structures and shirts
+            drawTrackApparatus('A');
+            drawTrackApparatus('B');
+
+            // Update physical engines
+            updatePhysics();
+
+            requestAnimationFrame(updateAndRender);
+        }
+
+        // Initialize variables & start loop
+        resetLab();
+        updateAndRender();
+    </script>
+</body>
+</html>

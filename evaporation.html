@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Lab - Evaporation Surface Phenomenon</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-cyan: #22d3ee;
+            --stc-orange: #f97316;
+            --stc-red: #ef4444;
+            --stc-blue: #3b82f6;
+            --stc-green: #10b981;
+            --stc-purple: #c084fc;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .control-element {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #1e293b;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .toggle-group {
+            display: flex;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            border-radius: 8px;
+            overflow: hidden;
+            padding: 2px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            border-radius: 6px;
+        }
+
+        .toggle-btn.active {
+            background: var(--panel-bg);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover {
+            background: #273549;
+            border-color: #cbd5e1;
+        }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .speech-text strong {
+            color: var(--stc-yellow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="header-container">
+            <h1>Evaporation of Spilled Water from Floor</h1>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="evapCanvas" width="670" height="340"></canvas>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🧪 SPILLED WATER PATTERN (SURFACE AREA):</span>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="puddleConcBtn" class="toggle-btn active" onclick="setSpreadMode('concentrated')">Concentrated Puddle</button>
+                        <button id="puddleSpreadBtn" class="toggle-btn" onclick="setSpreadMode('spread')">Spread Out (Wide & Thin)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💨 WIND SPEED (FAN):</span>
+                        <span id="windBadge" style="color:var(--stc-cyan); font-weight:bold;">OFF</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="windSlider" min="0" max="3" value="0" step="1" oninput="handleWind(this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🌡️ AIR TEMPERATURE (°C):</span>
+                        <span id="tempBadge" style="color:var(--stc-orange); font-weight:bold;">25°C</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="tempSlider" min="15" max="45" value="25" step="1" oninput="handleTemp(this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>💧 RELATIVE HUMIDITY (%):</span>
+                        <span id="humidityBadge" style="color:var(--stc-blue); font-weight:bold;">50%</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="humiditySlider" min="10" max="90" value="50" step="5" oninput="handleHumidity(this.value)">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="action-btn" onclick="resetLab()">🔄 Spill Water & Reset Floor</button>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Lab Assistant:</div>
+            <div id="speakerBox" class="speech-text">Water spilled on a floor evaporates continuously at room temperature. Observe how the surface molecules escape!</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('evapCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const windBadge = document.getElementById('windBadge');
+        const tempBadge = document.getElementById('tempBadge');
+        const humidityBadge = document.getElementById('humidityBadge');
+        const windSlider = document.getElementById('windSlider');
+        const tempSlider = document.getElementById('tempSlider');
+        const humiditySlider = document.getElementById('humiditySlider');
+        const puddleConcBtn = document.getElementById('puddleConcBtn');
+        const puddleSpreadBtn = document.getElementById('puddleSpreadBtn');
+
+        // Simulation Parameters
+        let spreadMode = 'concentrated'; // 'concentrated' or 'spread'
+        let windSpeed = 0; // 0 (off), 1 (low), 2 (medium), 3 (high)
+        let temperature = 25; // °C
+        let humidity = 50; // %
+        let waterVolume = 100.0; // % remaining on floor
+        let evaporatedCount = 0; // total molecules evaporated
+        let liveEvapRate = 0.0; // molecules evaporated per second
+
+        // Animation/physics coordinates
+        const cx = 190; // center X of puddle on floor
+        const cyBottom = 280; // Floor line Y coordinate
+        let surfaceY = 265; // dynamic water surface line Y
+        let fanAngle = 0; // fan blade rotation angle
+        let windLines = []; // air breeze visual lines
+        
+        let molecules = [];
+        const maxMolecules = 55;
+
+        // Visual frame counters
+        let time = 0;
+        let evapTicks = 0;
+
+        // Visual setup card positions
+        const xStart = 425;
+        const yStart = 15;
+        const width = 230;
+        const height = 310;
+
+        // Class representing individual water molecules
+        class WaterMolecule {
+            constructor(index) {
+                this.index = index;
+                this.radius = 4.5;
+                this.state = 'liquid'; // 'liquid' or 'vapor'
+                
+                // Molecular kinetic energy: 0 (cold/blue) to 100 (hot/red)
+                this.ke = Math.random() * 80;
+                
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.alpha = 1.0;
+                
+                this.resetPosition();
+            }
+
+            resetPosition() {
+                let bounds = getPuddleBounds();
+                this.x = bounds.left + this.radius + Math.random() * (bounds.width - this.radius * 2);
+                this.y = surfaceY + this.radius + Math.random() * (cyBottom - surfaceY - this.radius * 2 - 1);
+                
+                // Ensure it fits within the puddle bounds Y (avoid clipping through floor)
+                if (this.y > cyBottom - this.radius - 1) this.y = cyBottom - this.radius - 2;
+                if (this.y < surfaceY + this.radius) this.y = surfaceY + this.radius + 1;
+
+                this.state = 'liquid';
+                this.alpha = 1.0;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+            }
+
+            update() {
+                if (this.state === 'liquid') {
+                    // Energy fluctuations due to collision heat transfer
+                    this.ke += (Math.random() - 0.5) * 4.0;
+                    
+                    // Constrain kinetic energy baseline by temperature
+                    let thermalBase = 15 + (temperature - 15) * 1.2;
+                    if (this.ke < thermalBase - 25) this.ke = thermalBase - 25;
+                    if (this.ke > 100) this.ke = 100;
+
+                    let speed = 0.2 + (this.ke / 100) * 0.8;
+                    this.x += this.vx * speed;
+                    this.y += this.vy * speed;
+
+                    // Bound checks inside puddle
+                    let bounds = getPuddleBounds();
+                    if (this.x < bounds.left + this.radius) {
+                        this.x = bounds.left + this.radius;
+                        this.vx = -this.vx;
+                    }
+                    if (this.x > bounds.right - this.radius) {
+                        this.x = bounds.right - this.radius;
+                        this.vx = -this.vx;
+                    }
+                    if (this.y > cyBottom - this.radius - 1) {
+                        this.y = cyBottom - this.radius - 1;
+                        this.vy = -this.vy;
+                    }
+                    
+                    // Surface boundary reflection
+                    if (this.y < surfaceY + this.radius) {
+                        this.y = surfaceY + this.radius;
+                        this.vy = Math.abs(this.vy);
+
+                        // Surface phenomenon evaporation trigger!
+                        // High kinetic energy surface molecules escape
+                        if (this.ke >= 72.0 && waterVolume > 0) {
+                            // Escape probability depends on temperature, wind, and humidity
+                            let escapeChance = 0.00045 * (1 + windSpeed * 1.2) * (temperature / 20) * (1 - humidity/100);
+                            
+                            // Spread out water evaporates much faster because particles are closer to the surface
+                            if (spreadMode === 'spread') {
+                                escapeChance *= 1.8; // surface area factor boost
+                            }
+
+                            if (Math.random() < escapeChance) {
+                                this.state = 'vapor';
+                                // Escaping upward velocity
+                                this.vy = -0.7 - Math.random() * 0.7;
+                                // Blown horizontally by wind speed
+                                this.vx = windSpeed * 0.8 + (Math.random() - 0.5) * 0.3;
+                                evaporatedCount++;
+                                evapTicks++;
+                                waterVolume = Math.max(0.0, waterVolume - 0.35);
+                            }
+                        }
+                    }
+                } else {
+                    // Vapor gas state: drifting upward and fading away
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.alpha -= 0.012; // fade out
+
+                    // Wind current force pushes vapor further right
+                    if (windSpeed > 0) {
+                        this.vx += 0.02 * windSpeed;
+                    }
+
+                    if (this.alpha <= 0) {
+                        // Recycle molecule once completely faded
+                        if (waterVolume > 0.5) {
+                            this.resetPosition();
+                        } else {
+                            // If water is spent, kill vapor molecule
+                            this.alpha = 0;
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                // Color-code based on kinetic energy
+                let col = '#3b82f6'; // Low energy: blue
+                if (this.state === 'vapor') {
+                    col = '#e2e8f0'; // gas vapor is light grey
+                } else if (this.ke >= 75.0) {
+                    col = '#ef4444'; // High energy: red/orange
+                } else if (this.ke >= 35.0) {
+                    col = '#10b981'; // Medium energy: green
+                }
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                let grad = ctx.createRadialGradient(this.x - 1, this.y - 1, 0, this.x, this.y, this.radius);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.5, col);
+                grad.addColorStop(1, '#1e293b');
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                // Draw molecular glow if highly energetic (about to escape)
+                if (this.state === 'liquid' && this.ke >= 75.0) {
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // Get puddle horizontal/vertical boundary constraints based on volume & spread mode
+        function getPuddleBounds() {
+            let left, right, width, maxDepth;
+            if (spreadMode === 'concentrated') {
+                width = 120;
+                left = cx - width/2;
+                right = cx + width/2;
+                maxDepth = 20; // thick deep puddle
+            } else {
+                // Spread out thin layer
+                width = 280;
+                left = cx - width/2;
+                right = cx + width/2;
+                maxDepth = 6; // very thin layer
+            }
+            return { left, right, width, maxDepth };
+        }
+
+        // Initialize molecules inside water puddle
+        function initMolecules() {
+            molecules = [];
+            for (let i = 0; i < maxMolecules; i++) {
+                molecules.push(new WaterMolecule(i));
+            }
+        }
+
+        // Spread mode toggle
+        function setSpreadMode(mode) {
+            spreadMode = mode;
+            if (mode === 'concentrated') {
+                puddleConcBtn.classList.add('active');
+                puddleSpreadBtn.classList.remove('active');
+            } else {
+                puddleConcBtn.classList.remove('active');
+                puddleSpreadBtn.classList.add('active');
+            }
+
+            // Adjust water level and reposition molecules
+            let bounds = getPuddleBounds();
+            surfaceY = cyBottom - bounds.maxDepth * (waterVolume / 100);
+            
+            initMolecules();
+            updateDialogue();
+        }
+
+        // Wind Speed slider handler
+        function handleWind(val) {
+            windSpeed = parseInt(val);
+            const labels = ["OFF", "LOW (2 m/s)", "MEDIUM (5 m/s)", "HIGH (9 m/s)"];
+            windBadge.innerText = labels[windSpeed];
+            updateDialogue();
+        }
+
+        // Temperature slider handler
+        function handleTemp(val) {
+            temperature = parseInt(val);
+            tempBadge.innerText = temperature + "°C";
+            updateDialogue();
+        }
+
+        // Humidity slider handler
+        function handleHumidity(val) {
+            humidity = parseInt(val);
+            humidityBadge.innerText = humidity + "%";
+            updateDialogue();
+        }
+
+        // Reset floor water
+        function resetLab() {
+            waterVolume = 100.0;
+            evaporatedCount = 0;
+            liveEvapRate = 0.0;
+            
+            windSlider.value = 0;
+            tempSlider.value = 25;
+            humiditySlider.value = 50;
+
+            handleWind(0);
+            handleTemp(25);
+            handleHumidity(50);
+            
+            setSpreadMode(spreadMode);
+        }
+
+        // Physics step updates
+        function updatePhysics() {
+            time++;
+
+            // Calculate dynamic surface line Y based on spread mode and water volume
+            let bounds = getPuddleBounds();
+            surfaceY = cyBottom - bounds.maxDepth * (waterVolume / 100);
+
+            // Evaporation rate calculations (ticks per 120 frames)
+            if (time % 120 === 0) {
+                liveEvapRate = (evapTicks / 120) * 60;
+                evapTicks = 0;
+            }
+
+            // Wind flow visual line generators blowing across floor
+            if (windSpeed > 0 && Math.random() < 0.08) {
+                windLines.push({
+                    x: 10,
+                    y: 220 + Math.random() * 45,
+                    speed: 3 + windSpeed * 2.8,
+                    length: 40 + Math.random() * 40,
+                    alpha: 0.15 + Math.random() * 0.15
+                });
+            }
+
+            // Update wind lines
+            windLines.forEach((wl, index) => {
+                wl.x += wl.speed;
+                if (wl.x > 380) {
+                    windLines.splice(index, 1);
+                }
+            });
+
+            // Update fan angle rotation
+            fanAngle += windSpeed * 0.18;
+
+            // Constrain and update active molecules
+            molecules.forEach(m => {
+                m.update();
+            });
+
+            // Clean dead vapor particles if floor is dry
+            if (waterVolume <= 0) {
+                molecules = molecules.filter(m => m.state === 'liquid' || m.alpha > 0);
+            }
+        }
+
+        // Dynamic Dialogue text box updates
+        function updateDialogue() {
+            if (waterVolume <= 0.2) {
+                speakerBox.innerHTML = "💧 <strong>Floor is dry!</strong> All spilled water has completely evaporated. Click <strong>Spill Water & Reset Floor</strong> to repeat the experiment.";
+                return;
+            }
+
+            // Construct dialogue text based on factors
+            let details = "";
+            if (spreadMode === 'concentrated') {
+                details += "The spilled water forms a **concentrated puddle**. Only a small surface area is exposed, meaning less molecules are at the top boundary. Evaporation is **slower**.";
+            } else {
+                details += "The spilled water has been **spread out wide and thin**. This increases the exposed surface area dramatically! Almost all molecules are now at the surface, allowing **extremely rapid evaporation**!";
+            }
+
+            if (windSpeed > 0) {
+                details += " The fan wind **accelerates floor drying** by carrying away the vapor molecules, reducing humidity directly above the puddle.";
+            }
+            if (temperature > 35) {
+                details += " Higher temperature increases the average kinetic energy of the puddle. You can see more red/orange molecules escaping.";
+            }
+            if (humidity > 70) {
+                details += " High humidity in the room slows down the rate of evaporation, meaning the wet floor will take longer to dry.";
+            }
+
+            speakerBox.innerHTML = "💡 <strong>Floor Evaporation:</strong> " + details + "<br>Observe that water evaporates from the floor **continuously at room temperature** because surface molecules are less bound and occasionally gain high kinetic energy.";
+        }
+
+        // Draw animated blowing fan stand and blades on floor level
+        function drawFan() {
+            let fx = 45;
+            let fy = 245; // resting near floor Y=280
+
+            ctx.save();
+            // Fan stand base
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(fx - 15, fy + 27, 30, 8); // base plate
+            ctx.fillRect(fx - 3, fy - 10, 6, 37); // post
+
+            // Outer wire cage ring
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(fx, fy - 10, 22, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Rotating blades
+            ctx.translate(fx, fy - 10);
+            ctx.rotate(fanAngle);
+            ctx.fillStyle = '#64748b';
+
+            for (let i = 0; i < 3; i++) {
+                ctx.rotate((2 * Math.PI) / 3);
+                ctx.beginPath();
+                ctx.ellipse(0, -10, 4, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Center hub pin
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Draw grey floor and spilled water puddle
+        function drawFloorAndPuddle() {
+            let bounds = getPuddleBounds();
+
+            ctx.save();
+            // 1. Draw floor tile surface line (grey line at Y = 280)
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(10, cyBottom);
+            ctx.lineTo(390, cyBottom);
+            ctx.stroke();
+
+            // Floor tile grout divisions for depth perception
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            for (let tx = 60; tx < 390; tx += 90) {
+                ctx.beginPath();
+                ctx.moveTo(tx, cyBottom);
+                ctx.lineTo(tx, cyBottom + 4);
+                ctx.stroke();
+            }
+
+            // 2. Draw water puddle fill shape
+            if (waterVolume > 0) {
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.25)'; // translucent blue puddle
+                ctx.beginPath();
+                if (spreadMode === 'concentrated') {
+                    // Concentrated rounder puddle contour
+                    ctx.roundRect(bounds.left, surfaceY, bounds.width, cyBottom - surfaceY, [8, 8, 0, 0]);
+                } else {
+                    // Wide thin puddle contour
+                    ctx.roundRect(bounds.left, surfaceY, bounds.width, cyBottom - surfaceY, [3, 3, 0, 0]);
+                }
+                ctx.fill();
+
+                // Puddle top surface meniscus highlight line
+                ctx.strokeStyle = 'rgba(125, 211, 252, 0.7)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(bounds.left + 2, surfaceY);
+                // Subtle liquid ripple wave
+                ctx.quadraticCurveTo(cx, surfaceY - 0.5 + Math.sin(time * 0.06) * 0.5, bounds.right - 2, surfaceY);
+                ctx.stroke();
+            }
+
+            // 3. Draw water molecules
+            molecules.forEach(m => m.draw());
+            ctx.restore();
+        }
+
+        // Draw dynamic wind flow breeze waves
+        function drawWindFlow() {
+            if (windSpeed === 0) return;
+            ctx.save();
+            ctx.lineWidth = 1.2;
+
+            windLines.forEach(wl => {
+                ctx.strokeStyle = 'rgba(34, 211, 238, ' + wl.alpha + ')';
+                ctx.beginPath();
+                ctx.moveTo(wl.x, wl.y);
+                ctx.bezierCurveTo(wl.x + wl.length/3, wl.y - 3, wl.x + 2*wl.length/3, wl.y + 3, wl.x + wl.length, wl.y);
+                ctx.stroke();
+            });
+            ctx.restore();
+        }
+
+        // Draw textbook force vector diagram
+        function drawForceDiagram(gdX, gdY, gdW, gdH) {
+            ctx.save();
+            // Draw box border
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(gdX, gdY, gdW, gdH);
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(gdX, gdY, gdW, gdH);
+
+            // Water split horizontal line (Y = gdY + 45)
+            let splitY = gdY + 45;
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
+            ctx.fillRect(gdX + 1, splitY, gdW - 2, gdH - 46);
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(gdX, splitY);
+            ctx.lineTo(gdX + gdW, splitY);
+            ctx.stroke();
+
+            // Title labels
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.fillText("AIR (GAS)", gdX + 8, splitY - 8);
+            ctx.fillText("WATER (LIQUID PUDDLE)", gdX + 8, splitY + 14);
+
+            // Helper function to draw an arrow
+            function drawArrow(startX, startY, endX, endY, color) {
+                ctx.save();
+                ctx.strokeStyle = color || '#cbd5e1';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                // Draw arrowhead
+                let angle = Math.atan2(endY - startY, endX - startX);
+                ctx.fillStyle = color || '#cbd5e1';
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - 4 * Math.cos(angle - Math.PI/6), endY - 4 * Math.sin(angle - Math.PI/6));
+                ctx.lineTo(endX - 4 * Math.cos(angle + Math.PI/6), endY - 4 * Math.sin(angle + Math.PI/6));
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 1. Bulk Molecule (in center water)
+            let bX = gdX + 46;
+            let bY = splitY + 38;
+            ctx.fillStyle = '#3b82f6'; // blue ball
+            ctx.beginPath();
+            ctx.arc(bX, bY, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Arrows in 8 directions (balanced cohesive forces)
+            let angles = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI, 5*Math.PI/4, 3*Math.PI/2, 7*Math.PI/4];
+            angles.forEach(a => {
+                let sx = bX + Math.cos(a) * 7;
+                let sy = bY + Math.sin(a) * 7;
+                let ex = bX + Math.cos(a) * 22;
+                let ey = bY + Math.sin(a) * 22;
+                drawArrow(sx, sy, ex, ey, 'rgba(59, 130, 246, 0.7)');
+            });
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("BULK PARTICLE", bX, gdY + gdH - 22);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '6px sans-serif';
+            ctx.fillText("Balanced Cohesive Pull", bX, gdY + gdH - 12);
+            ctx.fillText("(Net force = 0)", bX, gdY + gdH - 4);
+
+            // 2. Surface Molecule (on water line)
+            let sX = gdX + 138;
+            let sY = splitY;
+            ctx.fillStyle = '#ef4444'; // red ball
+            ctx.beginPath();
+            ctx.arc(sX, sY, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Arrows downwards and sideways only (unbalanced cohesive pull)
+            let sAngles = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI];
+            sAngles.forEach(a => {
+                let sx = sX + Math.cos(a) * 7;
+                let sy = sY + Math.sin(a) * 7;
+                let ex = sX + Math.cos(a) * 22;
+                let ey = sY + Math.sin(a) * 22;
+                drawArrow(sx, sy, ex, ey, 'rgba(239, 68, 68, 0.7)');
+            });
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.fillText("SURFACE PARTICLE", sX, gdY + gdH - 22);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '6px sans-serif';
+            ctx.fillText("Unbalanced Cohesive Pull", sX, gdY + gdH - 12);
+            ctx.fillText("(Net pull DOWNWARDS)", sX, gdY + gdH - 4);
+
+            ctx.restore();
+        }
+
+        // Draw telemetry panel
+        function drawTelemetry(xStart, yStart, width, height) {
+            // Background card frame
+            ctx.save();
+            ctx.fillStyle = 'rgba(21, 31, 50, 0.65)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.roundRect(xStart, yStart, width, height, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 1. Digital readouts in top panel
+            let readY = yStart + 22;
+            ctx.save();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillText("PUDDLE VOLUME REMAINING", xStart + 20, readY);
+            
+            // Volume bar
+            let pbX = xStart + 20;
+            let pbY = readY + 6;
+            let pbW = 190;
+            let pbH = 8;
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(pbX, pbY, pbW, pbH);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.85)';
+            ctx.fillRect(pbX + 1, pbY + 1, (pbW - 2) * (waterVolume / 100), pbH - 2);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 9px monospace';
+            ctx.fillText(waterVolume.toFixed(1) + "%", xStart + width - 50, readY);
+
+            // Cumulative evaporated count
+            let statY = pbY + 24;
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8.5px sans-serif';
+            ctx.fillText("EVAPORATED MOLECULES", xStart + 20, statY);
+            ctx.fillStyle = '#facc15';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(evaporatedCount, xStart + 20, statY + 14);
+
+            // Live Evaporation rate (updated periodically)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8.5px sans-serif';
+            ctx.fillText("DRYING RATE SPEED", xStart + 120, statY);
+            ctx.fillStyle = '#22d3ee';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(liveEvapRate.toFixed(2) + " mol/min", xStart + 120, statY + 14);
+
+            // Energy key color-coding guides
+            let keyY = statY + 32;
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 7.5px sans-serif';
+            ctx.fillText("PARTICLE ENERGY LEVELS KEY:", xStart + 20, keyY);
+            
+            // Color indicators
+            ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(xStart + 30, keyY + 10, 3, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#64748b'; ctx.font = '7px sans-serif'; ctx.fillText("Low", xStart + 38, keyY + 12);
+
+            ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(xStart + 80, keyY + 10, 3, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#64748b'; ctx.fillText("Medium", xStart + 88, keyY + 12);
+
+            ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(xStart + 145, keyY + 10, 3, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#64748b'; ctx.fillText("High (Escaping)", xStart + 153, keyY + 12);
+
+            ctx.restore();
+
+            // 2. Force Vector Diagram (Bottom half)
+            drawForceDiagram(xStart + 18, yStart + 142, 194, 150);
+        }
+
+        // Master Animation Loop
+        function updateAndRender() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw telemetry dashboard panel and gauges
+            drawTelemetry(xStart, yStart, width, height);
+
+            // 2. Draw active wind waves
+            drawWindFlow();
+
+            // 3. Draw fan blower setup
+            drawFan();
+
+            // 4. Draw floor and spilled water puddle
+            drawFloorAndPuddle();
+
+            // Run updates
+            updatePhysics();
+
+            requestAnimationFrame(updateAndRender);
+        }
+
+        // Initialize variables & launch loop
+        resetLab();
+        updateAndRender();
+    </script>
+</body>
+</html>

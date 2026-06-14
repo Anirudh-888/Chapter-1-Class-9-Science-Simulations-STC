@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Ultimate Lab - Universal Diffusion in Liquids</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-water: #38bdf8;
+            --stc-solid: #c084fc;
+            --stc-ink: #2563eb;
+            --stc-gas: #4ade80;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 750px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .navbar {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: #1e293b;
+            border: 2px solid var(--border-ui);
+            color: #94a3b8;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: #273549;
+            color: white;
+        }
+
+        .nav-btn.active {
+            color: white;
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        #btn-solid.active { background: linear-gradient(135deg, var(--stc-solid), #a855f7); }
+        #btn-liquid.active { background: linear-gradient(135deg, #0284c7, var(--stc-ink)); }
+        #btn-gas.active { background: linear-gradient(135deg, var(--stc-gas), #22c55e); color: #020617; }
+
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-ui);
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .indicator-dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .slider-element {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.88rem;
+            letter-spacing: 0.5px;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+        }
+
+        .trigger-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .trigger-btn:hover { background: #dc2626; }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="navbar">
+            <button class="nav-btn active" id="btn-solid" onclick="switchLabMode('solid')">Solid in Liquid</button>
+            <button class="nav-btn" id="btn-liquid" onclick="switchLabMode('liquid')">Liquid in Liquid</button>
+            <button class="nav-btn" id="btn-gas" onclick="switchLabMode('gas')">Gas in Liquid</button>
+        </div>
+
+        <div class="legend-bar">
+            <div class="legend-item"><div class="indicator-dot" style="background: #38bdf8;"></div><span>Water Particles</span></div>
+            <div class="legend-item"><div class="indicator-dot" id="solute-legend" style="background: #c084fc;"></div><span id="solute-name">Solid Crystal</span></div>
+        </div>
+
+        <div class="viewport-container">
+            <canvas id="diffusionCanvas" width="700" height="350"></canvas>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="control-row">
+                <div class="slider-element">
+                    <div class="control-header">
+                        <span>🌡️ TEMPERATURE CONTROLLER (THERMAL ENERGY):</span>
+                        <span id="tempMeter" style="color:var(--stc-yellow); font-weight:bold;">25°C</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="tempSlider" min="10" max="95" value="25" oninput="adjustThermalEnergy(this.value)">
+                </div>
+                <button class="trigger-btn" id="actionBtn" onclick="triggerDiffusionEvent()">Drop Crystal</button>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Diffusion Analyzer:</div>
+            <div id="speakerBox" class="speech-text">Select a matter state above to start the diffusion analysis.</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('diffusionCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const tempMeter = document.getElementById('tempMeter');
+        const tempSlider = document.getElementById('tempSlider');
+        const actionBtn = document.getElementById('actionBtn');
+        const soluteLegend = document.getElementById('solute-legend');
+        const soluteName = document.getElementById('solute-name');
+
+        let labMode = 'solid';
+        let waterParticles = [];
+        let soluteParticles = [];
+        const maxWater = 320; // Increased to ensure deep 3/4 water filling visibility
+
+        let temperature = 25;
+        let kineticScale = 1.0;
+        let isEventTriggered = false;
+
+        // Container geometric layout lines
+        const beaker = { left: 190, right: 510, floor: 320, liquidTop: 130 };
+
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type; 
+                this.radius = type === 'gas' ? 3.5 : 5.2; 
+                
+                let angle = Math.random() * Math.PI * 2;
+                let speed = type === 'gas' ? 2.8 : 0.8;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                
+                this.isDissolved = false;
+            }
+
+            updateEngine() {
+                let thermalMod = kineticScale;
+                if (this.type === 'solid' && !this.isDissolved) {
+                    thermalMod = 0.08; // Locked solid particles vibrate slightly in place
+                }
+
+                this.x += this.vx * thermalMod;
+                this.y += this.vy * thermalMod;
+
+                // Gentle gravity effect for moving fluid molecules
+                if (this.type === 'liquid' || (this.type === 'solid' && this.isDissolved)) {
+                    this.vy += 0.015;
+                }
+
+                // Containment Wall Physics Collisions
+                if (this.x - this.radius < beaker.left) { this.x = beaker.left + this.radius; this.vx *= -1; }
+                if (this.x + this.radius > beaker.right) { this.x = beaker.right - this.radius; this.vx *= -1; }
+                if (this.y + this.radius > beaker.floor) { this.y = beaker.floor - this.radius; this.vy *= -0.2; this.vx *= 0.8; }
+                
+                // Confinement constraints to keep water/solutes below water level line
+                let topLimit = (this.type === 'water' || this.type === 'liquid' || this.type === 'solid') ? beaker.liquidTop : 0;
+                if (this.y - this.radius < topLimit) { this.y = topLimit + this.radius; this.vy *= -1; }
+            }
+
+            draw(renderContext) {
+                renderContext.beginPath();
+                renderContext.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                
+                // FIXED: Direct hex strings passed into gradient configurations to ensure crystal clear visibility
+                let grad = renderContext.createRadialGradient(this.x - 1.5, this.y - 1.5, 1, this.x, this.y, this.radius);
+                if (this.type === 'water') {
+                    grad.addColorStop(0, '#e0f2fe'); grad.addColorStop(1, '#38bdf8');
+                } else if (this.type === 'solid') {
+                    grad.addColorStop(0, '#f3e8ff'); grad.addColorStop(1, '#c084fc');
+                } else if (this.type === 'liquid') {
+                    grad.addColorStop(0, '#60a5fa'); grad.addColorStop(1, '#2563eb');
+                } else if (this.type === 'gas') {
+                    grad.addColorStop(0, '#bbf7d0'); grad.addColorStop(1, '#4ade80');
+                }
+
+                renderContext.fillStyle = grad;
+                renderContext.fill();
+                renderContext.closePath();
+            }
+        }
+
+        function initWaterMatrix() {
+            waterParticles = [];
+            // Disperse fluid atoms smoothly inside the bottom 3/4 box area
+            for (let i = 0; i < maxWater; i++) {
+                let rx = beaker.left + 10 + Math.random() * (beaker.right - beaker.left - 20);
+                let ry = beaker.liquidTop + 10 + Math.random() * (beaker.floor - beaker.liquidTop - 20);
+                waterParticles.push(new Particle(rx, ry, 'water'));
+            }
+        }
+
+        function switchLabMode(mode) {
+            labMode = mode;
+            isEventTriggered = false;
+            soluteParticles = [];
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+
+            initWaterMatrix();
+
+            if (mode === 'solid') {
+                actionBtn.innerText = "Drop Crystal";
+                soluteLegend.style.background = '#c084fc';
+                soluteName.innerText = "Solid Crystal";
+                speakerBox.innerHTML = "Solids can diffuse into liquids! Click **'Drop Crystal'** to place a solid crystal model at the bottom. Watch how long it takes to break apart.";
+            } else if (mode === 'liquid') {
+                actionBtn.innerText = "Inject Ink Drop";
+                soluteLegend.style.background = '#2563eb';
+                soluteName.innerText = "Liquid Ink";
+                speakerBox.innerHTML = "Liquids can diffuse into liquids! Click **'Inject Ink Drop'** to pour secondary fluid particles from the top surface and study fluid-on-fluid intermixing speed.";
+            } else if (mode === 'gas') {
+                actionBtn.innerText = "Pump Air Gas";
+                soluteLegend.style.background = '#4ade80';
+                soluteName.innerText = "Atmospheric Gas";
+                speakerBox.innerHTML = "Gases can diffuse into liquids! Click **'Pump Air Gas'** to see highly energetic air molecules move into the space between water molecules.";
+            }
+        }
+
+        function triggerDiffusionEvent() {
+            isEventTriggered = true;
+            soluteParticles = [];
+
+            if (labMode === 'solid') {
+                let gridRows = 5;
+                let gridCols = 8;
+                let spacing = 10;
+                let startX = (canvas.width / 2) - ((gridCols - 1) * spacing) / 2;
+                let startY = beaker.floor - 55;
+
+                for (let r = 0; r < gridRows; r++) {
+                    for (let c = 0; c < gridCols; c++) {
+                        let p = new Particle(startX + (c * spacing), startY + (r * spacing), 'solid');
+                        p.vx = (Math.random() - 0.5) * 0.2; 
+                        p.vy = (Math.random() - 0.5) * 0.2;
+                        soluteParticles.push(p);
+                    }
+                }
+                speakerBox.innerHTML = "<strong>Solid Crystal Dropped!</strong> Notice how it stays lumped at the bottom. Because particles in solids are locked tightly, they must slowly break their bonds (**dissolve**) before they can spread out.";
+            } else if (labMode === 'liquid') {
+                for (let i = 0; i < 55; i++) {
+                    let rx = (canvas.width / 2) + (Math.random() - 0.5) * 30;
+                    let ry = beaker.liquidTop + 5 + Math.random() * 20;
+                    let p = new Particle(rx, ry, 'liquid');
+                    p.vy = 0.5 + Math.random() * 1.0; 
+                    soluteParticles.push(p);
+                }
+                speakerBox.innerHTML = "<strong>Ink Injected!</strong> See how quickly the liquid ink spreads and clouds through the container? Liquids diffuse **much faster than solids** because fluid particles can slide and roll past one another freely!";
+            } else if (labMode === 'gas') {
+                for (let i = 0; i < 60; i++) {
+                    let rx = beaker.left + Math.random() * (beaker.right - beaker.left);
+                    let ry = 15 + Math.random() * 80;
+                    soluteParticles.push(new Particle(rx, ry, 'gas'));
+                }
+                speakerBox.innerHTML = "<strong>Gas Pumped!</strong> Look at the green gas molecules zooming around violently. They easily force their way past the waterline, slipping perfectly into the **spaces between the water molecules**. This is how aquatic plants and fish get oxygen ($O_2$)!";
+            }
+        }
+
+        function adjustThermalEnergy(val) {
+            temperature = parseInt(val);
+            tempMeter.innerText = temperature + "°C";
+            kineticScale = 0.3 + (temperature * 0.035);
+
+            if(isEventTriggered) {
+                if (temperature > 70) {
+                    speakerBox.innerHTML = "<strong>🔥 High Temperature detected!</strong> The rate of diffusion increases significantly! Higher heat means particles acquire more **kinetic energy**, causing them to move and mix at high speed.";
+                } else if (temperature < 20) {
+                    speakerBox.innerHTML = "<strong>❄️ Cold Temperature detected!</strong> Diffusion slows down. Low thermal energy means less particle velocity, so it takes longer for substances to intermix.";
+                }
+            }
+        }
+
+        function handleFluidDensityStacking() {
+            let combined = [...waterParticles, ...soluteParticles];
+            
+            for (let i = 0; i < combined.length; i++) {
+                for (let j = i + 1; j < combined.length; j++) {
+                    let pi = combined[i];
+                    let pj = combined[j];
+
+                    if (pi.type === 'solid' && !pi.isDissolved && pj.type === 'solid' && !pj.isDissolved) continue;
+                    if (pi.type === 'gas' || pj.type === 'gas') continue;
+
+                    let dx = pj.x - pi.x;
+                    let dy = pj.y - pi.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    let minDist = pi.radius + pj.radius - 0.5;
+
+                    if (dist < minDist) {
+                        if (dist === 0) { dx = Math.random()-0.5; dy = Math.random()-0.5; dist = 0.1; }
+                        let overlap = minDist - dist;
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+
+                        pi.x -= nx * overlap * 0.5;
+                        pi.y -= ny * overlap * 0.5;
+                        pj.x += nx * overlap * 0.5;
+                        pj.y += ny * overlap * 0.5;
+                    }
+                }
+            }
+        }
+
+        function renderAndSimulate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Glass Beaker Casing Graphic
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(beaker.left, 80);
+            ctx.lineTo(beaker.left, beaker.floor);
+            ctx.lineTo(beaker.right, beaker.floor);
+            ctx.lineTo(beaker.right, 80);
+            ctx.stroke();
+
+            // Handle solid crystal breakdown logic timeline over animation cycles
+            if (labMode === 'solid' && isEventTriggered) {
+                soluteParticles.forEach(p => {
+                    if (!p.isDissolved && Math.random() < (0.003 * kineticScale)) {
+                        p.isDissolved = true;
+                        let ang = Math.random() * Math.PI * 2;
+                        p.vx = Math.cos(ang) * 0.8;
+                        p.vy = Math.sin(ang) * 0.8;
+                    }
+                });
+            }
+
+            // Execute molecular stacking push loops
+            handleFluidDensityStacking();
+
+            // Render all background fluid atoms
+            waterParticles.forEach(p => {
+                p.updateEngine();
+                p.draw(ctx);
+            });
+
+            // Render all incoming solute particles
+            soluteParticles.forEach(p => {
+                p.updateEngine();
+                p.draw(ctx);
+            });
+
+            requestAnimationFrame(renderAndSimulate);
+        }
+
+        // Initialize and boot engine runtime
+        switchLabMode('solid');
+        renderAndSimulate();
+    </script>
+</body>
+</html>

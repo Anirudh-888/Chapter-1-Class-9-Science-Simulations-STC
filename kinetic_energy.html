@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STC Physics - Kinetic Energy & States of Matter</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-color: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .simulation-container {
+            background-color: var(--panel-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .dashboard {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .dashboard span {
+            color: #ec4899;
+        }
+        
+        #state-display {
+            color: #34d399;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: linear-gradient(180deg, #111827 0%, #030712 100%);
+            border: 4px solid #475569;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .burner {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 0px;
+            background: radial-gradient(circle, #f97316 0%, rgba(254,240,138,0) 70%);
+            border-radius: 50% 50% 0 0;
+            transition: height 0.1s linear, background 0.3s ease;
+            pointer-events: none;
+            opacity: 0.75;
+        }
+
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: #475569;
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .explanation {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #334155;
+            padding-top: 12px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="simulation-container">
+        <h2>Kinetic Energy & Vaporization</h2>
+        
+        <div class="dashboard">
+            <div>Temperature: <span id="temp-display">25°C</span></div>
+            <div>State: <span id="state-display">Liquid</span></div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="simCanvas" width="500" height="350"></canvas>
+            <div id="burnerFlame" class="burner"></div>
+        </div>
+
+        <div class="controls">
+            <div class="slider-label">
+                <span>Heat Control:</span>
+                <span id="heat-status" style="color: var(--accent-color); font-weight: bold;">Cold Water</span>
+            </div>
+            <input type="range" id="heatSlider" min="0" max="120" value="25">
+        </div>
+
+        <div id="explanation-text" class="explanation">
+            Water molecules at room temperature have moderate kinetic energy. They glide past each other but remain bound together inside the container.
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('heatSlider');
+        const tempDisplay = document.getElementById('temp-display');
+        const stateDisplay = document.getElementById('state-display');
+        const heatStatus = document.getElementById('heat-status');
+        const explanation = document.getElementById('explanation-text');
+        const burnerFlame = document.getElementById('burnerFlame');
+
+        const particles = [];
+        const numParticles = 60;
+
+        // Initialize particles
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: Math.random() * (canvas.width - 20) + 10,
+                y: Math.random() * (canvas.height - 150) + 140, // Start inside liquid layer
+                vx: (Math.random() - 0.5),
+                vy: (Math.random() - 0.5),
+                radius: 6
+            });
+        }
+
+        function getSimulationParams(temp) {
+            let config = {
+                speedMultiplier: 0.3 + (temp * 0.07),
+                state: "Liquid",
+                color: "#38bdf8",
+                statusText: "Cold Water",
+                expl: "Water molecules at room temperature have moderate kinetic energy. They glide past each other but remain bound together inside the container.",
+                flameHeight: 0,
+                flameColor: "radial-gradient(circle, #f97316 0%, rgba(254,240,138,0) 70%)"
+            };
+
+            if (temp <= 15) {
+                config.statusText = "Cold Water";
+                config.expl = "Low temperature means low kinetic energy. Particles move slowly and stay clumped closer to the bottom.";
+                config.flameHeight = 0;
+            } else if (temp > 15 && temp < 80) {
+                config.statusText = "Warm Water";
+                config.expl = "As heat energy is absorbed, it converts to kinetic energy! The water molecules begin to jitter and shuffle past each other much faster.";
+                config.flameHeight = (temp - 15) * 0.5;
+                config.flameColor = "radial-gradient(circle, #f97316 20%, rgba(239,68,68,0) 70%)";
+            } else if (temp >= 80 && temp < 100) {
+                config.statusText = "Hot / Near Boiling";
+                config.expl = "High kinetic energy! The particles move violently, colliding frequently. Some particles near the surface are almost ready to break free.";
+                config.flameHeight = (temp - 15) * 0.65;
+                config.flameColor = "radial-gradient(circle, #ef4444 30%, #f97316 60%, rgba(239,68,68,0) 80%)";
+            } else {
+                config.state = "Vapor (Gas)";
+                config.statusText = "Boiling / Vaporizing";
+                config.color = "#e2e8f0";
+                config.expl = "BOILING POINT REACHED! The kinetic energy is now high enough to overcome the attractive forces between molecules. They break apart completely and zoom rapid-fire into the air as water vapor!";
+                config.flameHeight = 70;
+                config.flameColor = "radial-gradient(circle, #3b82f6 10%, #ef4444 40%, #f97316 70%, rgba(0,0,0,0) 90%)";
+            }
+
+            return config;
+        }
+
+        function updateAndRender() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const temp = parseInt(slider.value);
+            const config = getSimulationParams(temp);
+
+            // Update UI dashboard labels
+            tempDisplay.innerText = temp + "°C";
+            stateDisplay.innerText = config.state;
+            heatStatus.innerText = config.statusText;
+            explanation.innerText = config.expl;
+            
+            // Render Burner Flame dynamic adjustments
+            burnerFlame.style.height = config.flameHeight + "px";
+            burnerFlame.style.background = config.flameColor;
+
+            // Draw liquid level background line if still mostly liquid
+            if (config.state === "Liquid") {
+                ctx.strokeStyle = "rgba(56, 189, 248, 0.2)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, 120);
+                ctx.lineTo(canvas.width, 120);
+                ctx.stroke();
+            }
+
+            // Move and draw particles
+            particles.forEach(p => {
+                // Apply velocity factored by active slider temperature kinetic modifier
+                p.x += p.vx * config.speedMultiplier;
+                p.y += p.vy * config.speedMultiplier;
+
+                // Ceiling/Liquid boundaries management 
+                let topBoundary = 0;
+                if (config.state === "Liquid") {
+                    // Force containment to bottom section of beaker
+                    topBoundary = 120;
+                }
+
+                // Collision detection with container walls
+                if (p.x - p.radius < 0) {
+                    p.x = p.radius;
+                    p.vx *= -1;
+                }
+                if (p.x + p.radius > canvas.width) {
+                    p.x = canvas.width - p.radius;
+                    p.vx *= -1;
+                }
+                if (p.y - p.radius < topBoundary) {
+                    p.y = topBoundary + p.radius;
+                    p.vy *= -1;
+                }
+                if (p.y + p.radius > canvas.height) {
+                    p.y = canvas.height - p.radius;
+                    p.vy *= -1;
+                }
+
+                // Draw standard molecule representing H2O structure
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = config.color;
+                ctx.shadowBlur = config.state === "Vapor (Gas)" ? 8 : 2;
+                ctx.shadowColor = config.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+
+            // Reset shadow properties for next loops
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(updateAndRender);
+        }
+
+        // Run primary engine loop
+        updateAndRender();
+    </script>
+</body>
+</html>

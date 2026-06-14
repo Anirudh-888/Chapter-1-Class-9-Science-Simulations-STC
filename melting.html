@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Lab - Ice Melting & Latent Heat</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-cyan: #22d3ee;
+            --stc-orange: #f97316;
+            --stc-red: #ef4444;
+            --stc-green: #10b981;
+            --stc-blue: #3b82f6;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 90px;
+            justify-content: center;
+        }
+
+        .control-element {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #1e293b;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #273549;
+            border-color: #cbd5e1;
+        }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .speech-text strong {
+            color: var(--stc-yellow);
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+            border: 1px solid var(--border-ui);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--stc-blue), var(--stc-cyan));
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="header-container">
+            <h1>Melting of Ice & Latent Heat Lab</h1>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="meltCanvas" width="670" height="340"></canvas>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="control-element">
+                <div class="control-header">
+                    <span>🔥 ADJUST BURNER FLAME INTENSITY:</span>
+                    <span id="burnerBadge" style="color:var(--stc-orange); font-weight:bold;">OFF</span>
+                </div>
+                <input type="range" class="interactive-slider" id="burnerSlider" min="0" max="3" value="0" oninput="handleBurner(this.value)">
+            </div>
+            <div class="btn-group">
+                <button class="action-btn" onclick="resetLab()">🔄 Reset Laboratory Experiment</button>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Lab Assistant:</div>
+            <div id="speakerBox" class="speech-text">Welcome to the Chemistry Lab. Set the burner flame above <strong>OFF</strong> to begin heating the ice beaker.</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('meltCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const burnerBadge = document.getElementById('burnerBadge');
+        const burnerSlider = document.getElementById('burnerSlider');
+
+        // Simulation Parameters
+        let temperature = -15.0; // °C
+        let phase = 'solid'; // solid, melting, liquid, boiling
+        let meltProgress = 0.0; // 0 to 100
+        let boilProgress = 0.0; // 0 to 100
+        let burnerLevel = 0; // 0: off, 1: low, 2: medium, 3: high
+        let heatApplied = 0.0; // °C per frame
+
+        // Animation counters
+        let flameTime = 0;
+        let bubbleTime = 0;
+        let steamList = [];
+        let bubbles = [];
+
+        // Particle System variables inside circular inset
+        const insetX = 555;
+        const insetY = 95;
+        const insetRadius = 52;
+        let particles = [];
+        const numParticles = 32;
+
+        // Visual setup details
+        let beakerX = 120;
+        let beakerWidth = 140;
+        let beakerY = 85;
+        let beakerHeight = 110;
+        let beakerBottom = beakerY + beakerHeight; // 195
+
+        // Particle Class for magnified circle view
+        class ViewportParticle {
+            constructor(gridX, gridY, index) {
+                this.gridX = gridX;
+                this.gridY = gridY;
+                this.index = index;
+                this.x = insetX + gridX;
+                this.y = insetY + gridY;
+                this.vx = (Math.random() - 0.5) * 1.0;
+                this.vy = (Math.random() - 0.5) * 1.0;
+                this.radius = 4.2;
+                this.state = 'bonded'; // bonded, free, gaseous
+                this.color = '#38bdf8';
+                this.alpha = 1.0;
+            }
+
+            update() {
+                if (phase === 'solid') {
+                    // Vibrational motion around lattice grid point
+                    // Jitter amplitude increases as temperature rises from -15 to 0
+                    let jitterAmp = 0.2 + ((temperature + 15) / 15) * 1.5;
+                    this.x = insetX + this.gridX + (Math.random() - 0.5) * jitterAmp;
+                    this.y = insetY + this.gridY + (Math.random() - 0.5) * jitterAmp;
+                    this.state = 'bonded';
+                } 
+                else if (phase === 'melting') {
+                    // Some particles break bonds proportional to melt progress
+                    let threshold = (this.index / numParticles) * 100;
+                    if (meltProgress >= threshold) {
+                        this.state = 'free';
+                    } else {
+                        this.state = 'bonded';
+                    }
+
+                    if (this.state === 'bonded') {
+                        let jitterAmp = 1.7;
+                        this.x = insetX + this.gridX + (Math.random() - 0.5) * jitterAmp;
+                        this.y = insetY + this.gridY + (Math.random() - 0.5) * jitterAmp;
+                    } else {
+                        // Apply gravity and bounce inside the circular boundary
+                        this.vy += 0.08; // gravity
+                        this.vx *= 0.98;
+                        this.vy *= 0.98;
+
+                        this.x += this.vx;
+                        this.y += this.vy;
+
+                        resolveCircleBoundary(this);
+                    }
+                } 
+                else if (phase === 'liquid') {
+                    this.state = 'free';
+                    // Fluid molecular slide, speed scales with temperature
+                    let thermalSpeed = 0.3 + (temperature / 100) * 1.5;
+                    
+                    this.vx += (Math.random() - 0.5) * 0.25 * thermalSpeed;
+                    this.vy += (Math.random() - 0.5) * 0.25 * thermalSpeed;
+
+                    // Dampen
+                    this.vx *= 0.96;
+                    this.vy *= 0.96;
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    resolveCircleBoundary(this);
+                } 
+                else if (phase === 'boiling') {
+                    if (this.state !== 'gaseous') {
+                        // High speed thermal liquid movement
+                        this.vx += (Math.random() - 0.5) * 0.6;
+                        this.vy += (Math.random() - 0.5) * 0.6;
+                        
+                        this.vx *= 0.95;
+                        this.vy *= 0.95;
+
+                        this.x += this.vx;
+                        this.y += this.vy;
+
+                        resolveCircleBoundary(this);
+
+                        // Chance to boil off and escape into gaseous state
+                        if (Math.random() < 0.005) {
+                            this.state = 'gaseous';
+                            this.vy = -1.5 - Math.random() * 1.5;
+                            this.vx = (Math.random() - 0.5) * 1.0;
+                        }
+                    } else {
+                        // Moving upward and escaping
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.alpha -= 0.015;
+
+                        if (this.alpha <= 0) {
+                            // Recycle particle back at the bottom of the container
+                            this.state = 'free';
+                            this.alpha = 1.0;
+                            // Random position near the bottom of the circle
+                            let angle = Math.PI * (0.2 + Math.random() * 0.6);
+                            this.x = insetX + Math.cos(angle) * (insetRadius - 8);
+                            this.y = insetY + Math.sin(angle) * (insetRadius - 8);
+                            this.vx = (Math.random() - 0.5) * 1.0;
+                            this.vy = (Math.random() - 0.5) * 1.0;
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.globalAlpha = this.alpha;
+                
+                let pColor = '#38bdf8';
+                if (this.state === 'bonded') pColor = '#a5f3fc'; // ice crystals color
+                else if (this.state === 'gaseous') pColor = '#94a3b8'; // steam molecules color
+                
+                let grad = ctx.createRadialGradient(this.x - 1, this.y - 1, 0, this.x, this.y, this.radius);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.5, pColor);
+                grad.addColorStop(1, '#0c4a6e');
+                ctx.fillStyle = grad;
+                
+                ctx.shadowBlur = this.state === 'bonded' ? 4 : 2;
+                ctx.shadowColor = pColor;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Particle circle boundary resolver
+        function resolveCircleBoundary(p) {
+            let dx = p.x - insetX;
+            let dy = p.y - insetY;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            let limit = insetRadius - p.radius - 1;
+
+            if (dist > limit) {
+                let nx = dx / dist;
+                let ny = dy / dist;
+
+                // Push back inside
+                p.x = insetX + nx * limit;
+                p.y = insetY + ny * limit;
+
+                // Reflect velocity vector
+                let dotProd = p.vx * nx + p.vy * ny;
+                p.vx -= 2 * dotProd * nx;
+                p.vy -= 2 * dotProd * ny;
+
+                // Friction loss
+                p.vx *= 0.7;
+                p.vy *= 0.7;
+            }
+        }
+
+        // Initialize particles in grid for ice lattice
+        function initParticles() {
+            particles = [];
+            let index = 0;
+            // Draw a neat hexagon grid inside circle bounds
+            for (let row = -3; row <= 3; row++) {
+                let cols = 6 - Math.abs(row);
+                let startCol = -cols / 2;
+                for (let col = 0; col < cols; col++) {
+                    if (index >= numParticles) break;
+                    let dx = (startCol + col + 0.5 * (row % 2)) * 14;
+                    let dy = row * 12;
+                    
+                    // Verify point falls well within circular viewport
+                    if (dx*dx + dy*dy < (insetRadius - 10)*(insetRadius - 10)) {
+                        particles.push(new ViewportParticle(dx, dy, index));
+                        index++;
+                    }
+                }
+            }
+            // Fallback fill to hit exact molecule counts
+            while (particles.length < numParticles) {
+                let angle = Math.random() * Math.PI * 2;
+                let dist = Math.random() * (insetRadius - 12);
+                let dx = Math.cos(angle) * dist;
+                let dy = Math.sin(angle) * dist;
+                particles.push(new ViewportParticle(dx, dy, particles.length));
+            }
+        }
+
+        // Bubble Class for beaker boiling phase
+        class BeakerBubble {
+            constructor() {
+                this.x = beakerX + 15 + Math.random() * (beakerWidth - 30);
+                this.y = beakerBottom - 10;
+                this.radius = 1.5 + Math.random() * 2.5;
+                this.speed = 1.0 + Math.random() * 1.5;
+                this.alpha = 0.8;
+            }
+            update() {
+                this.y -= this.speed;
+                this.x += Math.sin(this.y * 0.1) * 0.4; // wiggle
+                // Float up to the current water surface level
+                let waterSurfaceY = beakerBottom - 15 - 25 * (meltProgress / 100);
+                if (phase === 'boiling') {
+                    waterSurfaceY = beakerBottom - 40; // fully melted water line
+                }
+                if (this.y < waterSurfaceY) {
+                    this.alpha = 0.0; // Pop
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(165, 243, 252, ' + this.alpha + ')';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Steam particle class rising above beaker
+        class SteamParticle {
+            constructor() {
+                this.x = beakerX + 20 + Math.random() * (beakerWidth - 40);
+                this.y = beakerBottom - 45;
+                this.radius = 6 + Math.random() * 12;
+                this.vx = (Math.random() - 0.5) * 0.6;
+                this.vy = -0.5 - Math.random() * 0.8;
+                this.alpha = 0.4;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.005;
+                this.radius += 0.15;
+            }
+            draw() {
+                ctx.save();
+                ctx.fillStyle = 'rgba(203, 213, 225, ' + Math.max(0, this.alpha) + ')';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Change burner level
+        function handleBurner(val) {
+            burnerLevel = parseInt(val);
+            let labels = ["OFF", "LOW (30 W)", "MEDIUM (60 W)", "HIGH (120 W)"];
+            burnerBadge.innerText = labels[burnerLevel];
+            
+            // Heat gain rate matches flame settings
+            let rates = [0.0, 0.04, 0.09, 0.20]; // Degrees Celsius per frame
+            heatApplied = rates[burnerLevel];
+            updateDialogue();
+        }
+
+        // Update narrative dialog boxes
+        function updateDialogue() {
+            if (burnerLevel === 0) {
+                if (phase === 'solid') {
+                    speakerBox.innerHTML = "Bunsen burner is <strong>OFF</strong>. The temperature is stable at <strong>" + temperature.toFixed(1) + "°C</strong>. Supply heat using the burner slider to see the molecular transition.";
+                } else if (phase === 'melting') {
+                    speakerBox.innerHTML = "Heating stopped. The beaker holds a mixture of ice and water at exactly <strong>0.0°C</strong>. The phase transition remains locked at <strong>" + Math.floor(meltProgress) + "%</strong>.";
+                } else if (phase === 'liquid') {
+                    speakerBox.innerHTML = "Burner is off. The water remains at a warm liquid state of <strong>" + temperature.toFixed(1) + "°C</strong>.";
+                } else if (phase === 'boiling') {
+                    speakerBox.innerHTML = "Heating stopped. Boiling has ceased, and steam emission slows down. The water temperature remains at <strong>100.0°C</strong>.";
+                }
+                return;
+            }
+
+            // Supply active dialogues based on chemical phase
+            if (phase === 'solid') {
+                speakerBox.innerHTML = "🔥 <strong>Active Heating:</strong> The burner is transferring thermal energy. Ice particles absorb heat, causing their molecules to <strong>vibrate faster and faster</strong>. This increases the kinetic energy, and the temperature rises towards 0°C.";
+            } 
+            else if (phase === 'melting') {
+                speakerBox.innerHTML = "⚡ <strong>LATENT HEAT OF FUSION IN ACTION!</strong> Notice that the thermometer is stalled **exactly at 0.0°C**, even though heat is constantly supplied. The energy is NOT raising the temperature; it is being consumed to <strong>break the intermolecular bonds</strong> keeping the ice particles in their solid lattice!";
+            } 
+            else if (phase === 'liquid') {
+                if (temperature < 60) {
+                    speakerBox.innerHTML = "💧 <strong>Liquid Phase:</strong> All the ice has melted! The supplied heat energy now increases the kinetic energy of the free water molecules, causing them to roll and slide past each other faster, driving the <strong>temperature upwards</strong>.";
+                } else {
+                    speakerBox.innerHTML = "🌡️ <strong>Approaching Boiling:</strong> Water molecules are moving at very high speeds. You can see small thermal currents forming. Soon, the liquid will reach its boiling point of 100°C.";
+                }
+            } 
+            else if (phase === 'boiling') {
+                speakerBox.innerHTML = "💨 <strong>LATENT HEAT OF VAPORIZATION!</strong> The water is boiling. The temperature stalls at **exactly 100.0°C**. The added energy is used to completely separate the liquid molecules, converting them to steam (gas state).";
+            }
+        }
+
+        function resetLab() {
+            temperature = -15.0;
+            phase = 'solid';
+            meltProgress = 0.0;
+            boilProgress = 0.0;
+            steamList = [];
+            bubbles = [];
+            
+            initParticles();
+            handleBurner(burnerSlider.value);
+            updateDialogue();
+        }
+
+        // Resolve frame steps
+        function updatePhysics() {
+            flameTime += (burnerLevel + 1) * 0.15;
+            bubbleTime++;
+
+            // Environmental passive heat exchange (highly scientifically realistic!)
+            // If burner is off and system is below room temp (25°C), it absorbs heat from room extremely slowly
+            // If burner is off and system is hot (e.g. liquid at 80°C), it cools down towards 25°C slowly.
+            let Q = heatApplied;
+            if (burnerLevel === 0) {
+                let roomTemp = 25.0;
+                let exchangeCoeff = 0.0003;
+                Q = (roomTemp - temperature) * exchangeCoeff;
+            }
+
+            // Phase machine
+            if (phase === 'solid') {
+                temperature += Q;
+                if (temperature >= 0.0) {
+                    temperature = 0.0;
+                    phase = 'melting';
+                    updateDialogue();
+                }
+            } 
+            else if (phase === 'melting') {
+                // Melt progression speed based on heating rate
+                if (Q > 0) {
+                    meltProgress += Q * 0.95; // takes a realistic amount of time
+                } else if (Q < 0) {
+                    // Re-freeze slightly if cooled below room temp by passive means (not possible since room is 25C, but good logic)
+                    meltProgress += Q * 0.5;
+                }
+                
+                if (meltProgress >= 100) {
+                    meltProgress = 100.0;
+                    phase = 'liquid';
+                    updateDialogue();
+                }
+                if (meltProgress <= 0) {
+                    meltProgress = 0.0;
+                    phase = 'solid';
+                    temperature = 0.0;
+                    updateDialogue();
+                }
+            } 
+            else if (phase === 'liquid') {
+                temperature += Q;
+                
+                // Keep boundaries
+                if (temperature < 0.0) {
+                    temperature = 0.0;
+                    phase = 'melting';
+                    updateDialogue();
+                }
+                if (temperature >= 100.0) {
+                    temperature = 100.0;
+                    phase = 'boiling';
+                    updateDialogue();
+                }
+            } 
+            else if (phase === 'boiling') {
+                if (Q > 0) {
+                    boilProgress += Q * 0.15;
+                } else if (Q < 0) {
+                    temperature += Q;
+                    phase = 'liquid';
+                    updateDialogue();
+                }
+
+                // Bubble generator
+                if (burnerLevel > 0 && Math.random() < 0.06 * burnerLevel) {
+                    bubbles.push(new BeakerBubble());
+                }
+
+                // Steam generator
+                if (burnerLevel > 0 && Math.random() < 0.04 * burnerLevel) {
+                    steamList.push(new SteamParticle());
+                }
+            }
+
+            // Update steam list
+            steamList.forEach((s, index) => {
+                s.update();
+                if (s.alpha <= 0) {
+                    steamList.splice(index, 1);
+                }
+            });
+
+            // Update bubbles
+            bubbles.forEach((b, index) => {
+                b.update();
+                if (b.alpha <= 0) {
+                    bubbles.splice(index, 1);
+                }
+            });
+
+            // Update microscopic particles inside circular viewer
+            particles.forEach(p => p.update());
+        }
+
+        // Draw flames on the burner
+        function drawFlames(bx, by, bWidth) {
+            if (burnerLevel === 0) return;
+
+            let numFlames = burnerLevel === 1 ? 2 : (burnerLevel === 2 ? 3 : 5);
+            let flameHeight = burnerLevel === 1 ? 16 : (burnerLevel === 2 ? 28 : 42);
+            let colorCore = burnerLevel === 3 ? '#a5f3fc' : '#38bdf8'; // very hot flame core (cyan/white)
+            let colorOuter = burnerLevel === 1 ? '#f97316' : '#2563eb'; // low is orange, high is deep blue
+
+            ctx.save();
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = colorOuter;
+            
+            // Draw animated fire shapes
+            ctx.fillStyle = colorOuter;
+            ctx.beginPath();
+            ctx.moveTo(bx - 10, by);
+            
+            for (let i = -10; i <= bWidth + 10; i += 8) {
+                let jitter = Math.sin(flameTime + i) * (5 * (burnerLevel / 3));
+                let h = flameHeight + jitter;
+                ctx.lineTo(bx + i, by - h);
+            }
+            ctx.lineTo(bx + bWidth + 10, by);
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner super hot cone
+            ctx.fillStyle = colorCore;
+            ctx.beginPath();
+            ctx.moveTo(bx - 2, by);
+            for (let i = -2; i <= bWidth + 2; i += 6) {
+                let jitter = Math.cos(flameTime * 1.5 + i) * 3;
+                let h = (flameHeight * 0.55) + jitter;
+                ctx.lineTo(bx + i, by - h);
+            }
+            ctx.lineTo(bx + bWidth + 2, by);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawBeakerAndApparatus() {
+            let cx = 190; // center X of beaker tripod
+            
+            // 1. Draw Tripod Stand legs (behind beaker)
+            ctx.save();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4.5;
+            
+            // Left leg
+            ctx.beginPath();
+            ctx.moveTo(cx - 50, 195);
+            ctx.lineTo(cx - 85, 320);
+            ctx.stroke();
+            
+            // Right leg
+            ctx.beginPath();
+            ctx.moveTo(cx + 50, 195);
+            ctx.lineTo(cx + 85, 320);
+            ctx.stroke();
+            
+            // Middle rear leg
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(cx, 195);
+            ctx.lineTo(cx, 315);
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Bunsen Burner base
+            ctx.save();
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(cx - 25, 305, 50, 15); // stand base
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(cx - 5, 255, 10, 50); // barrel
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(cx - 8, 250, 16, 6); // nozzle head
+            ctx.restore();
+
+            // Draw burner flames
+            drawFlames(cx - 8, 250, 16);
+
+            // 3. Draw Tripod Ring Platform & Wire Gauze
+            ctx.save();
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(cx - 75, 193, 150, 6); // Ring plate
+            
+            // Wire gauze mesh visual
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            for (let meshX = cx - 70; meshX <= cx + 70; meshX += 5) {
+                ctx.beginPath();
+                ctx.moveTo(meshX, 192);
+                ctx.lineTo(meshX, 194);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // 4. Draw Water & Ice contents in Beaker
+            ctx.save();
+            let waterSurfaceY = beakerBottom - 15 - 25 * (meltProgress / 100);
+            if (phase === 'boiling') {
+                waterSurfaceY = beakerBottom - 40; // fully melted water line
+            }
+
+            // Draw Water fill
+            if (meltProgress > 0) {
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+                ctx.fillRect(beakerX + 2, waterSurfaceY, beakerWidth - 4, beakerBottom - waterSurfaceY - 2);
+            }
+
+            // Draw animated Bubbles when boiling
+            bubbles.forEach(b => b.draw());
+
+            // Draw Ice Cubes
+            // Ice cubes shrink and round out as melt progress rises
+            let iceScale = Math.max(0, 1.0 - (meltProgress / 100));
+            if (iceScale > 0) {
+                ctx.fillStyle = 'rgba(165, 243, 252, 0.7)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = '#a5f3fc';
+
+                // Stacking 4 ice cubes at the bottom. Shrink size based on meltScale.
+                let size = 20 * iceScale;
+                let cornerRadius = 4 * (1 - iceScale) + 1; // round off corners as it melts!
+
+                // Bobbing height in water
+                let bob = Math.sin(flameTime * 0.5) * 2 * (1 - iceScale);
+
+                if (size > 1.5) {
+                    // Cube 1
+                    drawIceCube(beakerX + 25, beakerBottom - size - 2 + bob * 0.4, size, cornerRadius);
+                    // Cube 2
+                    drawIceCube(beakerX + 50, beakerBottom - size - 2 + bob * 0.6, size, cornerRadius);
+                    // Cube 3
+                    drawIceCube(beakerX + 85, beakerBottom - size - 2 - bob * 0.3, size, cornerRadius);
+                    // Cube 4 (on top of others)
+                    if (meltProgress < 70) {
+                        drawIceCube(beakerX + 40, beakerBottom - size * 2 - 2 + bob, size, cornerRadius);
+                        drawIceCube(beakerX + 68, beakerBottom - size * 2 - 2 - bob * 0.5, size, cornerRadius);
+                    }
+                }
+            }
+            ctx.restore();
+
+            // 5. Draw Glass Beaker Walls
+            ctx.save();
+            ctx.strokeStyle = 'rgba(241, 245, 249, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(beakerX, beakerY);
+            ctx.lineTo(beakerX, beakerBottom);
+            ctx.lineTo(beakerX + beakerWidth, beakerBottom);
+            ctx.lineTo(beakerX + beakerWidth, beakerY);
+            ctx.stroke();
+
+            // Beaker pouring lip
+            ctx.strokeStyle = 'rgba(241, 245, 249, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(beakerX, beakerY + 1);
+            ctx.quadraticCurveTo(beakerX - 5, beakerY - 2, beakerX - 8, beakerY);
+            ctx.stroke();
+
+            // Beaker Graduations/Measurement ticks
+            ctx.fillStyle = '#64748b';
+            ctx.font = '8px monospace';
+            ctx.fillText("200 mL", beakerX + 15, beakerY + 20);
+            ctx.fillRect(beakerX + 2, beakerY + 20, 10, 1.5);
+            ctx.fillText("150 mL", beakerX + 15, beakerY + 45);
+            ctx.fillRect(beakerX + 2, beakerY + 45, 10, 1.5);
+            ctx.fillText("100 mL", beakerX + 15, beakerY + 70);
+            ctx.fillRect(beakerX + 2, beakerY + 70, 10, 1.5);
+            ctx.fillText("50 mL", beakerX + 15, beakerY + 95);
+            ctx.fillRect(beakerX + 2, beakerY + 95, 10, 1.5);
+            ctx.restore();
+
+            // 6. Draw Suspended Laboratory Thermometer
+            ctx.save();
+            let thermX = cx; // center of beaker
+            let thermTop = 15;
+            let thermBottom = beakerBottom - 25; // 170
+            
+            // Glass outer tube
+            ctx.strokeStyle = 'rgba(248, 250, 252, 0.7)';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermTop);
+            ctx.lineTo(thermX, thermBottom);
+            ctx.stroke();
+
+            // Mercury bulb at bottom
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(thermX, thermBottom, 7, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mercury rising tube column
+            // Scale goes from -15°C (Y = 150) to 100°C (Y = 30)
+            let tempPercent = (temperature + 15) / 115; // 0 to 1
+            let colTopY = thermBottom - 8 - tempPercent * (thermBottom - 8 - 25);
+            
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermBottom - 3);
+            ctx.lineTo(thermX, colTopY);
+            ctx.stroke();
+
+            // Thread/Strap holding the thermometer
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermTop);
+            ctx.lineTo(thermX, 0);
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw rising steam clouds above beaker
+            steamList.forEach(s => s.draw());
+        }
+
+        // Helper to draw ice cubes
+        function drawIceCube(x, y, size, radius) {
+            ctx.beginPath();
+            ctx.roundRect(x, y, size, size, radius);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Draw Telemetry Dashboard
+        function drawTelemetry(xStart, yStart, width, height) {
+            // Draw background panel
+            ctx.save();
+            ctx.fillStyle = 'rgba(21, 31, 50, 0.65)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(xStart, yStart, width, height, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // Section 1: Magnified Thermometer scale
+            let termX = xStart + 35;
+            let termScaleHeight = 240;
+            let termY = yStart + 20;
+
+            // Glass stem body
+            ctx.save();
+            ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+            ctx.fillStyle = '#090d16';
+            ctx.lineWidth = 12;
+            ctx.beginPath();
+            ctx.moveTo(termX, termY);
+            ctx.lineTo(termX, termY + termScaleHeight);
+            ctx.stroke();
+
+            // Mercury bulb bottom
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(termX, termY + termScaleHeight + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Thermometer graduation marks (-15°C to 100°C)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px monospace';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            let stepVal = 20;
+            for (let t = -20; t <= 100; t += stepVal) {
+                let ratio = (t + 20) / 120; // 0 to 1
+                let gY = termY + termScaleHeight - ratio * termScaleHeight;
+                
+                // Tick line
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(termX - 6, gY);
+                ctx.lineTo(termX + 6, gY);
+                ctx.stroke();
+
+                // Text label
+                ctx.fillText(t + "°C", termX - 10, gY);
+            }
+
+            // Mercury level column inside scale
+            let scaleRatio = (temperature + 20) / 120;
+            let levelY = termY + termScaleHeight - scaleRatio * termScaleHeight;
+            
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(termX, termY + termScaleHeight);
+            ctx.lineTo(termX, levelY);
+            ctx.stroke();
+            ctx.restore();
+
+            // Digital temperature readout box
+            ctx.save();
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("TEMPERATURE", termX, termY + termScaleHeight + 35);
+            ctx.font = 'bold 13px monospace';
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText(temperature.toFixed(1) + " °C", termX, termY + termScaleHeight + 48);
+            ctx.restore();
+
+            // Section 2: Magnified Microscopic Particle Inset
+            let circleCenterX = insetX;
+            let circleCenterY = insetY;
+            
+            // Draw Inset title
+            ctx.save();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("PARTICLE VIEW", circleCenterX, circleCenterY - insetRadius - 12);
+            ctx.restore();
+
+            // Draw Circular window glass rim
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(circleCenterX, circleCenterY, insetRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#020617';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 4;
+            ctx.fill();
+            ctx.stroke();
+
+            // Magnified Glass light sheen
+            let glassSheen = ctx.createLinearGradient(circleCenterX - insetRadius, circleCenterY - insetRadius, circleCenterX + insetRadius, circleCenterY + insetRadius);
+            glassSheen.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+            glassSheen.addColorStop(0.4, 'rgba(255, 255, 255, 0.01)');
+            glassSheen.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+            ctx.fillStyle = glassSheen;
+            ctx.fill();
+            ctx.restore();
+
+            // Draw spring chemical bonds in Solid phase (grid matrix)
+            if (phase === 'solid' || phase === 'melting') {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.2)';
+                ctx.lineWidth = 1;
+                // Draw connecting lines between particles still in 'bonded' state
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        let p1 = particles[i];
+                        let p2 = particles[j];
+                        
+                        if (p1.state === 'bonded' && p2.state === 'bonded') {
+                            let dx = p2.x - p1.x;
+                            let dy = p2.y - p1.y;
+                            let d = Math.sqrt(dx*dx + dy*dy);
+                            // Only connect nearest neighbors
+                            if (d < 16) {
+                                ctx.beginPath();
+                                ctx.moveTo(p1.x, p1.y);
+                                ctx.lineTo(p2.x, p2.y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+                ctx.restore();
+            }
+
+            // Update & Draw Inset particles
+            particles.forEach(p => {
+                p.draw();
+            });
+
+            // Section 3: Stat Text Details & Progress
+            let statsY = yStart + 175;
+            ctx.save();
+            ctx.textAlign = 'center';
+            
+            // Phase State Badge
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillText("CHEMICAL PHASE STATE", circleCenterX, statsY);
+            
+            let phaseColor = '#10b981'; // solid: cyan, melting: yellow, liquid: green, boiling: orange
+            let phaseLabel = "SOLID ICE";
+            if (phase === 'solid') {
+                phaseColor = '#22d3ee';
+                phaseLabel = "SOLID (ICE)";
+            } else if (phase === 'melting') {
+                phaseColor = '#facc15';
+                phaseLabel = "PHASE TRANSITION";
+            } else if (phase === 'liquid') {
+                phaseColor = '#10b981';
+                phaseLabel = "LIQUID (WATER)";
+            } else if (phase === 'boiling') {
+                phaseColor = '#ef4444';
+                phaseLabel = "BOILING POINT";
+            }
+
+            ctx.fillStyle = phaseColor;
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(phaseLabel, circleCenterX, statsY + 16);
+
+            // Progress tracking
+            if (phase === 'solid') {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px sans-serif';
+                ctx.fillText("Ice is heating up...", circleCenterX, statsY + 45);
+            } 
+            else if (phase === 'melting') {
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = 'bold 8.5px sans-serif';
+                ctx.fillText("LATENT HEAT ABSORPTION:", circleCenterX, statsY + 40);
+                
+                // Draw miniature Progress Bar
+                let pbX = circleCenterX - 45;
+                let pbY = statsY + 47;
+                let pbW = 90;
+                let pbH = 8;
+                
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(pbX, pbY, pbW, pbH);
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.7)';
+                ctx.fillRect(pbX + 1, pbY + 1, (pbW - 2) * (meltProgress / 100), pbH - 2);
+                
+                ctx.fillStyle = '#facc15';
+                ctx.font = 'bold 9px monospace';
+                ctx.fillText(Math.floor(meltProgress) + "% MELTED", circleCenterX, pbY + 22);
+            } 
+            else if (phase === 'liquid') {
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '9px sans-serif';
+                ctx.fillText("All ice melted! Liquid heating...", circleCenterX, statsY + 45);
+            } 
+            else if (phase === 'boiling') {
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillText("💨 RAPID EVAPORATION", circleCenterX, statsY + 45);
+            }
+            ctx.restore();
+        }
+
+        // Main Draw and Loop Cycle
+        function updateAndRender() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw telemetry dashboard panel
+            drawTelemetry(425, 15, 230, 310);
+
+            // 2. Draw laboratory experiment setup (stand, burner, flames, beaker, thermometer, ice)
+            drawBeakerAndApparatus();
+
+            // Run updates
+            updatePhysics();
+            requestAnimationFrame(updateAndRender);
+        }
+
+        // Initialize system
+        resetLab();
+        updateAndRender();
+    </script>
+</body>
+</html>

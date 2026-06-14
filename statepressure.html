@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Lab - Effect of Pressure on State of Matter</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-cyan: #22d3ee;
+            --stc-orange: #f97316;
+            --stc-red: #ef4444;
+            --stc-green: #10b981;
+            --stc-blue: #3b82f6;
+            --stc-purple: #c084fc;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .control-element {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #1e293b;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .toggle-group {
+            display: flex;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            border-radius: 8px;
+            overflow: hidden;
+            padding: 2px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            border-radius: 6px;
+        }
+
+        .toggle-btn.active {
+            background: var(--panel-bg);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover {
+            background: #273549;
+            border-color: #cbd5e1;
+        }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .speech-text strong {
+            color: var(--stc-yellow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="header-container">
+            <h1>Effect of Pressure on State of Matter</h1>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="pressCanvas" width="670" height="340"></canvas>
+        </div>
+
+        <div class="dashboard-controls">
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🧪 SELECT GAS SUBSTANCE:</span>
+                    </div>
+                    <div class="toggle-group">
+                        <button id="gasLpgBtn" class="toggle-btn active" onclick="setGas('LPG')">LPG (Propane)</button>
+                        <button id="gasCo2Btn" class="toggle-btn" onclick="setGas('CO2')">Carbon Dioxide (CO₂)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🎚️ ADJUST CHAMBER PRESSURE (atm):</span>
+                        <span id="pressureBadge" style="color:var(--stc-cyan); font-weight:bold;">1.0 atm</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="pressureSlider" min="1" max="100" value="1" step="1" oninput="handlePressure(this.value)">
+                </div>
+
+                <div class="control-element">
+                    <div class="control-header">
+                        <span>🌡️ ADJUST TEMPERATURE (°C):</span>
+                        <span id="tempBadge" style="color:var(--stc-orange); font-weight:bold;">25°C</span>
+                    </div>
+                    <input type="range" class="interactive-slider" id="tempSlider" min="-100" max="50" value="25" step="1" oninput="handleTemp(this.value)">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="action-btn" onclick="resetLab()">🔄 Reset Laboratory Experiment</button>
+            </div>
+        </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Lab Assistant:</div>
+            <div id="speakerBox" class="speech-text">Use the sliders to increase the pressure or decrease the temperature. Observe how the particles respond!</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pressCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const pressureBadge = document.getElementById('pressureBadge');
+        const tempBadge = document.getElementById('tempBadge');
+        const gasLpgBtn = document.getElementById('gasLpgBtn');
+        const gasCo2Btn = document.getElementById('gasCo2Btn');
+        const pressureSlider = document.getElementById('pressureSlider');
+        const tempSlider = document.getElementById('tempSlider');
+
+        // Simulation Parameters
+        let pressure = 1.0; // atm
+        let temperature = 25.0; // °C
+        let selectedGas = 'LPG'; // 'LPG' or 'CO2'
+        let currentPhase = 'GAS'; // 'GAS', 'LIQUID', 'SOLID', 'SUPERCRITICAL'
+        let avgSpacing = 15.2; // Ångströms
+
+        // Physical Boundaries (Chamber coordinates)
+        const cx = 190; // center X of compression cylinder
+        const cyBottom = 295; // bottom Y wall of chamber
+        const cyTop = 50; // top ceiling limit
+        const chamberW = 150; // chamber width
+        const chamberXLeft = cx - chamberW/2; // X left boundary
+        const chamberXRight = cx + chamberW/2; // X right boundary
+
+        // Piston visual setup
+        let pistonY = 70; // starts high (low pressure)
+        let particleSystem = [];
+        const numParticles = 45;
+
+        // Visual effects variables
+        let time = 0;
+        const xStart = 425;
+        const yStart = 15;
+        const width = 230;
+        const height = 310;
+
+        // Particle Class representing individual molecules inside the cylinder
+        class Molecule {
+            constructor(index) {
+                this.index = index;
+                this.radius = selectedGas === 'CO2' ? 5.0 : 5.5;
+                
+                // Spawn randomly within cylinder volume below starting piston position
+                this.x = chamberXLeft + this.radius + Math.random() * (chamberW - this.radius * 2);
+                this.y = 80 + Math.random() * 150;
+                
+                // Random gas speed
+                this.vx = (Math.random() - 0.5) * 2.0;
+                this.vy = (Math.random() - 0.5) * 2.0;
+                this.angle = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.08;
+            }
+
+            update() {
+                this.angle += this.rotSpeed;
+
+                if (currentPhase === 'GAS' || currentPhase === 'SUPERCRITICAL') {
+                    // Standard gaseous thermodynamics (bouncing off moving boundaries)
+                    // Speed is proportional to temperature (hotter = faster)
+                    let speedCoeff = Math.sqrt((temperature + 273) / 298.0);
+                    
+                    this.x += this.vx * speedCoeff;
+                    this.y += this.vy * speedCoeff;
+
+                    // Elastic collisions with chamber walls
+                    if (this.x < chamberXLeft + this.radius) {
+                        this.x = chamberXLeft + this.radius;
+                        this.vx = -this.vx;
+                    }
+                    if (this.x > chamberXRight - this.radius) {
+                        this.x = chamberXRight - this.radius;
+                        this.vx = -this.vx;
+                    }
+                    if (this.y > cyBottom - this.radius) {
+                        this.y = cyBottom - this.radius;
+                        this.vy = -this.vy;
+                    }
+                    
+                    // Collision with dynamic piston bottom
+                    let limitTopY = pistonY + 12; // piston thickness bottom line
+                    if (this.y < limitTopY + this.radius) {
+                        this.y = limitTopY + this.radius;
+                        // Bounce down, if piston is moving down, push particle down
+                        this.vy = Math.abs(this.vy);
+                    }
+                } 
+                else if (currentPhase === 'LIQUID') {
+                    // Condensated fluid behavior (particles settle and slide at the bottom)
+                    let liquidTopY = cyBottom - 50; // liquid meniscus level
+                    
+                    // Add gravity/drift down into the liquid layer
+                    if (this.y < liquidTopY + this.radius) {
+                        this.vy += 0.25; // gravity pull
+                    } else {
+                        // Slow, viscous sliding inside the fluid
+                        this.vx += (Math.random() - 0.5) * 0.12;
+                        this.vy += (Math.random() - 0.5) * 0.12;
+                        
+                        // Frictional damping
+                        this.vx *= 0.95;
+                        this.vy *= 0.95;
+                    }
+
+                    // A few molecules can randomly evaporate to gas space representing vapor pressure
+                    if (this.y >= liquidTopY && Math.random() < 0.0006) {
+                        this.vy = -2.5 - Math.random() * 1.5;
+                        this.vx = (Math.random() - 0.5) * 1.5;
+                    }
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Boundaries
+                    if (this.x < chamberXLeft + this.radius) {
+                        this.x = chamberXLeft + this.radius;
+                        this.vx = -this.vx * 0.5;
+                    }
+                    if (this.x > chamberXRight - this.radius) {
+                        this.x = chamberXRight - this.radius;
+                        this.vx = -this.vx * 0.5;
+                    }
+                    if (this.y > cyBottom - this.radius) {
+                        this.y = cyBottom - this.radius;
+                        this.vy = -this.vy * 0.5;
+                    }
+                    
+                    // Keep above liquid boundary constrained by piston
+                    let limitTopY = pistonY + 12;
+                    if (this.y < limitTopY + this.radius) {
+                        this.y = limitTopY + this.radius;
+                        this.vy = Math.abs(this.vy);
+                    }
+                } 
+                else if (currentPhase === 'SOLID') {
+                    // Crystal lattice arrangement (Dry Ice molecules locked in a vibrating grid)
+                    // Grid coordinates
+                    let cols = 7;
+                    let gridIndex = this.index % numParticles;
+                    let col = gridIndex % cols;
+                    let row = Math.floor(gridIndex / cols);
+                    
+                    // Grid base coordinates at bottom of chamber
+                    let gridSpacingX = (chamberW - 16) / (cols - 1);
+                    let gridSpacingY = 7;
+                    
+                    let targetX = chamberXLeft + 8 + col * gridSpacingX;
+                    let targetY = cyBottom - 8 - row * gridSpacingY;
+
+                    // Vibrational jitter scales with temperature
+                    let jitter = 0.12 + ((temperature + 100) / 150) * 0.8;
+                    
+                    this.x = targetX + (Math.random() - 0.5) * jitter;
+                    this.y = targetY + (Math.random() - 0.5) * jitter;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                if (selectedGas === 'CO2') {
+                    // Render Carbon Dioxide (Linear O=C=O molecule)
+                    // Central Carbon (black)
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 3.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Two Oxygen atoms (red, left and right)
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.arc(-4.5, 0, 2.4, 0, Math.PI * 2);
+                    ctx.arc(4.5, 0, 2.4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Double bonds representation lines
+                    ctx.strokeStyle = '#64748b';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(-4.5, -0.8);
+                    ctx.lineTo(4.5, -0.8);
+                    ctx.moveTo(-4.5, 0.8);
+                    ctx.lineTo(4.5, 0.8);
+                    ctx.stroke();
+                } else {
+                    // Render LPG (Propane C3H8, represented as bent carbon chain)
+                    ctx.fillStyle = '#10b981'; // green propane body
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 4.4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#a7f3d0'; // hydrogen clouds
+                    ctx.beginPath();
+                    ctx.arc(-3.5, -2.2, 2.4, 0, Math.PI * 2);
+                    ctx.arc(3.5, -2.2, 2.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // Initialize particles inside the chamber
+        function initParticles() {
+            particleSystem = [];
+            for (let i = 0; i < numParticles; i++) {
+                particleSystem.push(new Molecule(i));
+            }
+        }
+
+        // Gas toggle button handler
+        function setGas(gas) {
+            selectedGas = gas;
+            if (gas === 'LPG') {
+                gasLpgBtn.classList.add('active');
+                gasCo2Btn.classList.remove('active');
+            } else {
+                gasLpgBtn.classList.remove('active');
+                gasCo2Btn.classList.add('active');
+            }
+            initParticles();
+            resolvePhase();
+            updateDialogue();
+        }
+
+        // Pressure slider handler
+        function handlePressure(val) {
+            pressure = parseFloat(val);
+            pressureBadge.innerText = pressure.toFixed(1) + " atm";
+            resolvePhase();
+            updateDialogue();
+        }
+
+        // Temperature slider handler
+        function handleTemp(val) {
+            temperature = parseFloat(val);
+            tempBadge.innerText = temperature.toFixed(0) + "°C";
+            resolvePhase();
+            updateDialogue();
+        }
+
+        // State selector boundary checker
+        function resolvePhase() {
+            if (selectedGas === 'LPG') {
+                // Clausius-Clapeyron derived vapor pressure curve for Propane
+                // At 25°C, propane liquefies at ~9.5 atm. At -42°C, it boils/liquefies at 1.0 atm.
+                let thresholdP = 9.5 * Math.pow(Math.E, 0.035 * (temperature - 25));
+                if (pressure >= thresholdP) {
+                    currentPhase = 'LIQUID';
+                } else {
+                    currentPhase = 'GAS';
+                }
+            } else {
+                // Carbon Dioxide Phase state transitions
+                // Triple point is at -56.6°C and 5.11 atm. Critical point at 31.1°C and 73 atm.
+                if (temperature < -56.6) {
+                    // Directly gas to solid dry ice sublimation line
+                    let subLineP = 5.11 * Math.pow(Math.E, 0.045 * (temperature - (-56.6)));
+                    if (pressure >= subLineP) {
+                        currentPhase = 'SOLID';
+                    } else {
+                        currentPhase = 'GAS';
+                    }
+                } else if (temperature >= -56.6 && temperature < 31.1) {
+                    // Liquefaction curve above triple point
+                    let condLineP = 5.11 * Math.pow(Math.E, 0.032 * (temperature - (-56.6)));
+                    if (pressure >= condLineP) {
+                        currentPhase = 'LIQUID';
+                    } else {
+                        currentPhase = 'GAS';
+                    }
+                } else {
+                    // Supercritical fluids above critical temperature (31.1 °C)
+                    if (pressure >= 73.0) {
+                        currentPhase = 'SUPERCRITICAL';
+                    } else {
+                        currentPhase = 'GAS';
+                    }
+                }
+            }
+
+            // Calculate active Piston height Y based on pressure (Boyle's Law volume contraction)
+            // Volume = 1 / P. We map it to pistonY range (70 to 245)
+            let minPistonY = 70;
+            let maxPistonY = 245;
+            let volumeFraction = 0.12 + 0.88 * Math.pow(1 - (pressure - 1) / 99, 0.5);
+            pistonY = maxPistonY - (maxPistonY - minPistonY) * volumeFraction;
+        }
+
+        // Live assistant dialog messages
+        function updateDialogue() {
+            if (selectedGas === 'LPG') {
+                if (currentPhase === 'GAS') {
+                    if (pressure <= 2) {
+                        speakerBox.innerHTML = "⛽ <strong>LPG Gas:</strong> At room temperature and low pressure, propane molecules fly around freely with large spaces between them. They are in a <strong>gaseous state</strong>.";
+                    } else {
+                        speakerBox.innerHTML = "🎛️ <strong>Increasing Pressure:</strong> As you compress the piston, you decrease the volume. Propane molecules are forced closer together. The intermolecular spaces are shrinking.";
+                    }
+                } else {
+                    speakerBox.innerHTML = "💧 <strong>LIQUEFACTION ACHIEVED!</strong> At <strong>" + pressure.toFixed(1) + " atm</strong>, propane molecules are packed so close together that attractive forces pull them into a <strong>liquid state (LPG)</strong>. This is how fuel gas is packed into metal cylinders for cooking!";
+                }
+            } else {
+                // Carbon Dioxide messages
+                if (currentPhase === 'GAS') {
+                    if (temperature < -56.6) {
+                        speakerBox.innerHTML = "❄️ <strong>Cold CO₂ Gas:</strong> The temperature is below the triple point (<strong>-56.6°C</strong>). The molecules have low kinetic energy. Increase pressure to see deposition!";
+                    } else {
+                        speakerBox.innerHTML = "💨 <strong>CO₂ Gas:</strong> Carbon Dioxide molecules are bouncing off the cylinder walls. Compress the piston to see phase changes.";
+                    }
+                } else if (currentPhase === 'SOLID') {
+                    speakerBox.innerHTML = "📦 <strong>DRY ICE FORMATION!</strong> Under pressure at <strong>" + temperature.toFixed(0) + "°C</strong>, CO₂ undergoes deposition directly into solid <strong>Dry Ice</strong>! It does not form a liquid because the temperature is below its triple point. Releasing pressure sublimates it directly back to gas!";
+                } else if (currentPhase === 'LIQUID') {
+                    speakerBox.innerHTML = "💧 <strong>Liquid Carbon Dioxide:</strong> At pressures above <strong>" + (5.11 * Math.pow(Math.E, 0.032 * (temperature - (-56.6)))).toFixed(1) + " atm</strong>, CO₂ is forced into a liquid state because the temperature is above the triple point.";
+                } else {
+                    speakerBox.innerHTML = "✨ <strong>SUPERCRITICAL FLUID:</strong> The temperature (<strong>" + temperature.toFixed(0) + "°C</strong>) and pressure (<strong>" + pressure.toFixed(0) + " atm</strong>) have exceeded the critical point! CO₂ behaves with the density of a liquid and the flow properties of a gas.";
+                }
+            }
+        }
+
+        // Reset simulation parameters
+        function resetLab() {
+            pressure = 1.0;
+            temperature = 25.0;
+            selectedGas = 'LPG';
+            currentPhase = 'GAS';
+            
+            pressureSlider.value = 1;
+            tempSlider.value = 25;
+
+            pressureBadge.innerText = "1.0 atm";
+            tempBadge.innerText = "25°C";
+
+            setGas('LPG');
+            initParticles();
+            resolvePhase();
+            updateDialogue();
+        }
+
+        // Draw the visual heavy-duty compression cylinder
+        function drawApparatus() {
+            // 1. Draw metal cylinder frame back shadow
+            ctx.save();
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(chamberXLeft, cyTop, chamberW, cyBottom - cyTop);
+            
+            // Draw glass chamber light reflections
+            let chamberGrad = ctx.createLinearGradient(chamberXLeft, 0, chamberXRight, 0);
+            chamberGrad.addColorStop(0, 'rgba(255,255,255,0.06)');
+            chamberGrad.addColorStop(0.15, 'rgba(255,255,255,0.02)');
+            chamberGrad.addColorStop(0.85, 'rgba(255,255,255,0.02)');
+            chamberGrad.addColorStop(1, 'rgba(255,255,255,0.12)');
+            ctx.fillStyle = chamberGrad;
+            ctx.fillRect(chamberXLeft, cyTop, chamberW, cyBottom - cyTop);
+            ctx.restore();
+
+            // 2. Draw phase condensation visuals inside the chamber
+            if (currentPhase === 'LIQUID') {
+                // Liquid accumulation meniscus at bottom
+                ctx.save();
+                ctx.fillStyle = selectedGas === 'LPG' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(56, 189, 248, 0.25)';
+                ctx.fillRect(chamberXLeft + 2, cyBottom - 50, chamberW - 4, 48);
+
+                // Curved meniscus wave line
+                ctx.strokeStyle = selectedGas === 'LPG' ? 'rgba(52, 211, 153, 0.8)' : 'rgba(125, 211, 252, 0.8)';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(chamberXLeft + 2, cyBottom - 50);
+                ctx.quadraticCurveTo(cx, cyBottom - 52 + Math.sin(time * 0.08) * 1.5, chamberXRight - 2, cyBottom - 50);
+                ctx.stroke();
+                ctx.restore();
+            } else if (currentPhase === 'SOLID') {
+                // Solid block (Dry Ice)
+                ctx.save();
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ffffff';
+                
+                // Solid dry ice block
+                ctx.fillRect(chamberXLeft + 6, cyBottom - 40, chamberW - 12, 38);
+                ctx.strokeRect(chamberXLeft + 6, cyBottom - 40, chamberW - 12, 38);
+
+                // Draw frost/cracks details
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx - 30, cyBottom - 20);
+                ctx.lineTo(cx - 15, cyBottom - 32);
+                ctx.moveTo(cx + 25, cyBottom - 10);
+                ctx.lineTo(cx + 40, cyBottom - 25);
+                ctx.stroke();
+
+                // Faint vapor sublimation wisps rising off solid
+                ctx.fillStyle = 'rgba(255, 255, 255, ' + (0.2 + Math.abs(Math.sin(time * 0.03)) * 0.25) + ')';
+                for (let i = 0; i < 4; i++) {
+                    let wx = cx - 50 + i * 35 + Math.sin(time * 0.05 + i) * 6;
+                    let wy = cyBottom - 44 - Math.abs(Math.cos(time * 0.02 + i)) * 12;
+                    ctx.beginPath();
+                    ctx.arc(wx, wy, 4 + i, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            } else if (currentPhase === 'SUPERCRITICAL') {
+                // Golden hue glow for supercritical state
+                ctx.save();
+                let scGrad = ctx.createLinearGradient(0, pistonY + 12, 0, cyBottom);
+                scGrad.addColorStop(0, 'rgba(234, 179, 8, 0.15)');
+                scGrad.addColorStop(1, 'rgba(234, 179, 8, 0.03)');
+                ctx.fillStyle = scGrad;
+                ctx.fillRect(chamberXLeft + 2, pistonY + 12, chamberW - 4, cyBottom - (pistonY + 12) - 2);
+                ctx.restore();
+            }
+
+            // 3. Draw molecules
+            particleSystem.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // 4. Draw piston assembly (placed in front of particles)
+            ctx.save();
+            // Piston shaft rod
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(cx - 6, cyTop - 15, 12, pistonY - cyTop + 15);
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cx - 6, cyTop - 15, 12, pistonY - cyTop + 15);
+
+            // Piston head block
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2.5;
+            ctx.fillRect(chamberXLeft + 2, pistonY, chamberW - 4, 14);
+            ctx.strokeRect(chamberXLeft + 2, pistonY, chamberW - 4, 14);
+
+            // Double rubber compression rings (orange gaskets)
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(chamberXLeft + 2, pistonY + 3, 3, 2);
+            ctx.fillRect(chamberXRight - 5, pistonY + 3, 3, 2);
+            ctx.fillRect(chamberXLeft + 2, pistonY + 9, 3, 2);
+            ctx.fillRect(chamberXRight - 5, pistonY + 9, 3, 2);
+            ctx.restore();
+
+            // 5. Draw cylinder glass borders and metal flanges
+            ctx.save();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 4.5;
+            
+            // Left glass wall
+            ctx.beginPath();
+            ctx.moveTo(chamberXLeft, cyTop);
+            ctx.lineTo(chamberXLeft, cyBottom);
+            ctx.stroke();
+
+            // Right glass wall
+            ctx.beginPath();
+            ctx.moveTo(chamberXRight, cyTop);
+            ctx.lineTo(chamberXRight, cyBottom);
+            ctx.stroke();
+
+            // Metal base flange support block
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(cx - 85, cyBottom, 170, 15);
+            ctx.strokeStyle = '#475569';
+            ctx.strokeRect(cx - 85, cyBottom, 170, 15);
+
+            // Upper metal flange collar
+            ctx.fillRect(cx - 85, cyTop - 10, 170, 12);
+            ctx.strokeRect(cx - 85, cyTop - 10, 170, 12);
+            
+            // Base bolts
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(cx - 75, cyBottom - 4, 8, 4);
+            ctx.fillRect(cx + 67, cyBottom - 4, 8, 4);
+            ctx.restore();
+        }
+
+        // Draw dashboard gauges and P-T curves
+        function drawTelemetry(xStart, yStart, width, height) {
+            // Background panel
+            ctx.save();
+            ctx.fillStyle = 'rgba(21, 31, 50, 0.65)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.roundRect(xStart, yStart, width, height, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 1. Manometer Pressure Dial (Top Left)
+            let dialX = xStart + 55;
+            let dialY = yStart + 55;
+            let dialR = 34;
+
+            ctx.save();
+            // Dial border
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 3.0;
+            ctx.beginPath();
+            ctx.arc(dialX, dialY, dialR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Graduation ticks
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            for (let angle = Math.PI * 0.75; angle <= Math.PI * 2.25; angle += Math.PI * 0.15) {
+                ctx.beginPath();
+                ctx.moveTo(dialX + Math.cos(angle) * (dialR - 5), dialY + Math.sin(angle) * (dialR - 5));
+                ctx.lineTo(dialX + Math.cos(angle) * dialR, dialY + Math.sin(angle) * dialR);
+                ctx.stroke();
+            }
+
+            // Needle angle based on logarithmic pressure range
+            let pressRatio = (pressure - 1) / 99; // 0 to 1
+            let needleAngle = Math.PI * 0.75 + pressRatio * Math.PI * 1.5;
+            
+            ctx.strokeStyle = '#22d3ee'; // cyan needle
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(dialX, dialY);
+            ctx.lineTo(dialX + Math.cos(needleAngle) * (dialR - 8), dialY + Math.sin(needleAngle) * (dialR - 8));
+            ctx.stroke();
+
+            // Center needle pin
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(dialX, dialY, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Title and readout text
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("MANOMETER", dialX, dialY + dialR + 12);
+            ctx.fillStyle = '#22d3ee';
+            ctx.font = 'bold 11px monospace';
+            ctx.fillText(pressure.toFixed(1) + " atm", dialX, dialY + dialR + 25);
+            ctx.restore();
+
+            // 2. Thermometer Column (Top Right)
+            let thermX = xStart + 165;
+            let thermY = yStart + 20;
+            let thermH = 75;
+
+            ctx.save();
+            // Outer tube
+            ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+            ctx.fillStyle = '#090d16';
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermY);
+            ctx.lineTo(thermX, thermY + thermH);
+            ctx.stroke();
+
+            // Bulb
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.arc(thermX, thermY + thermH + 6, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rising orange column (range -100 °C to 50 °C)
+            let tempRatio = (temperature - (-100)) / 150;
+            let colHeight = tempRatio * thermH;
+            
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(thermX, thermY + thermH);
+            ctx.lineTo(thermX, thermY + thermH - colHeight);
+            ctx.stroke();
+
+            // Graduation ticks
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '7px monospace';
+            
+            const tempsToTick = [-100, -50, 0, 50];
+            tempsToTick.forEach(t => {
+                let ratio = (t - (-100)) / 150;
+                let ty = thermY + thermH - ratio * thermH;
+                ctx.beginPath();
+                ctx.moveTo(thermX - 10, ty);
+                ctx.lineTo(thermX - 5, ty);
+                ctx.stroke();
+                ctx.fillText(t + "°C", thermX - 35, ty + 2);
+            });
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("TEMPERATURE", thermX, thermY + thermH + 22);
+            ctx.fillStyle = '#f97316';
+            ctx.font = 'bold 11px monospace';
+            ctx.fillText(temperature.toFixed(0) + " °C", thermX, thermY + thermH + 35);
+            ctx.restore();
+
+            // 3. Dynamic P-T Phase Diagram (Bottom Half)
+            let gdX = xStart + 25;
+            let gdY = yStart + 165;
+            let gdW = 180;
+            let gdH = 110;
+
+            ctx.save();
+            // Title
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("P-T PHASE DIAGRAM", xStart + width/2, gdY - 10);
+
+            // Diagram Frame
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(gdX, gdY, gdW, gdH);
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(gdX, gdY, gdW, gdH);
+
+            // Draw phase regions and curves depending on LPG or CO2
+            // Mapping functions: T (-100 to 50) -> x (0 to gdW), P (1 to 100) -> y (gdH to 0)
+            function getCanvasX(t) {
+                return gdX + ((t - (-100)) / 150) * gdW;
+            }
+            function getCanvasY(p) {
+                // Logarithmic pressure mapping for better visual resolution
+                let ratio = Math.log10(p) / Math.log10(100);
+                return gdY + gdH - ratio * gdH;
+            }
+
+            if (selectedGas === 'CO2') {
+                // Solid, Liquid, Gas, Supercritical Phase Regions
+                let tTriple = -56.6;
+                let pTriple = 5.11;
+                let tCrit = 31.1;
+                let pCrit = 73.0;
+
+                // Color fills for phase regions
+                // 1. Gas phase (bottom area)
+                ctx.fillStyle = 'rgba(249, 115, 22, 0.12)'; // Orange
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(-100), getCanvasY(1));
+                // Sublimation curve
+                for (let t = -100; t <= tTriple; t += 2) {
+                    let p = 5.11 * Math.pow(Math.E, 0.045 * (t - tTriple));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                // Condensation curve
+                for (let t = tTriple; t <= tCrit; t += 2) {
+                    let p = 5.11 * Math.pow(Math.E, 0.032 * (t - tTriple));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.lineTo(getCanvasX(tCrit), getCanvasY(1));
+                ctx.closePath();
+                ctx.fill();
+
+                // 2. Solid phase (top-left)
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.12)'; // Purple
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(-100), getCanvasY(100));
+                ctx.lineTo(getCanvasX(tTriple), getCanvasY(100));
+                // Fusion line (nearly vertical)
+                ctx.lineTo(getCanvasX(tTriple), getCanvasY(pTriple));
+                // Sublimation curve back
+                for (let t = tTriple; t >= -100; t -= 2) {
+                    let p = 5.11 * Math.pow(Math.E, 0.045 * (t - tTriple));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // 3. Liquid phase (top-middle)
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.12)'; // Blue
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(tTriple), getCanvasY(pTriple));
+                ctx.lineTo(getCanvasX(tTriple), getCanvasY(100));
+                ctx.lineTo(getCanvasX(tCrit), getCanvasY(100));
+                ctx.lineTo(getCanvasX(tCrit), getCanvasY(pCrit));
+                // Vapor pressure curve back
+                for (let t = tCrit; t >= tTriple; t -= 2) {
+                    let p = 5.11 * Math.pow(Math.E, 0.032 * (t - tTriple));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // 4. Supercritical Fluid (SCF, top-right)
+                ctx.fillStyle = 'rgba(234, 179, 8, 0.1)'; // Golden
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(tCrit), getCanvasY(1));
+                ctx.lineTo(getCanvasX(tCrit), getCanvasY(100));
+                ctx.lineTo(getCanvasX(50), getCanvasY(100));
+                ctx.lineTo(getCanvasX(50), getCanvasY(1));
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw Boundary Lines
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1.2;
+
+                // Sublimation line
+                ctx.beginPath();
+                for (let t = -100; t <= tTriple; t += 2) {
+                    let p = 5.11 * Math.pow(Math.E, 0.045 * (t - tTriple));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.stroke();
+
+                // Vaporization line
+                ctx.beginPath();
+                for (let t = tTriple; t <= tCrit; t += 2) {
+                    let p = 5.11 * Math.pow(Math.E, 0.032 * (t - tTriple));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.stroke();
+
+                // Fusion line (melting)
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(tTriple), getCanvasY(pTriple));
+                ctx.lineTo(getCanvasX(tTriple), getCanvasY(100));
+                ctx.stroke();
+
+                // Critical point boundary divider (dotted)
+                ctx.setLineDash([2, 3]);
+                ctx.strokeStyle = '#475569';
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(tCrit), getCanvasY(pCrit));
+                ctx.lineTo(getCanvasX(tCrit), getCanvasY(1));
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Labels
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.7)';
+                ctx.font = '8px sans-serif';
+                ctx.fillText("SOLID", getCanvasX(-80), getCanvasY(30));
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
+                ctx.fillText("LIQUID", getCanvasX(-25), getCanvasY(55));
+                ctx.fillStyle = 'rgba(249, 115, 22, 0.7)';
+                ctx.fillText("GAS", getCanvasX(-35), getCanvasY(2));
+                ctx.fillStyle = 'rgba(234, 179, 8, 0.7)';
+                ctx.fillText("SCF", getCanvasX(36), getCanvasY(85));
+            } 
+            else {
+                // LPG (Propane) - Liquid and Gas regions
+                // Vapor pressure curve (100°C to 50°C)
+                ctx.fillStyle = 'rgba(249, 115, 22, 0.12)'; // Gas region (below curve)
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(-100), getCanvasY(1));
+                for (let t = -100; t <= 50; t += 2) {
+                    let p = 9.5 * Math.pow(Math.E, 0.035 * (t - 25));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.lineTo(getCanvasX(50), getCanvasY(1));
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.12)'; // Liquid region (above curve)
+                ctx.beginPath();
+                ctx.moveTo(getCanvasX(-100), getCanvasY(100));
+                ctx.lineTo(getCanvasX(50), getCanvasY(100));
+                for (let t = 50; t >= -100; t -= 2) {
+                    let p = 9.5 * Math.pow(Math.E, 0.035 * (t - 25));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // Boundary curve
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let t = -100; t <= 50; t += 2) {
+                    let p = 9.5 * Math.pow(Math.E, 0.035 * (t - 25));
+                    ctx.lineTo(getCanvasX(t), getCanvasY(p));
+                }
+                ctx.stroke();
+
+                // Labels
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.7)';
+                ctx.font = '8px sans-serif';
+                ctx.fillText("LIQUID", getCanvasX(-80), getCanvasY(50));
+                ctx.fillStyle = 'rgba(249, 115, 22, 0.7)';
+                ctx.fillText("GAS", getCanvasX(15), getCanvasY(2));
+            }
+
+            // Draw axis labels
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.fillText("P (atm)", gdX + 5, gdY + 12);
+            ctx.fillText("T (°C)", gdX + gdW - 25, gdY + gdH - 5);
+
+            // Draw flashing active state red dot coordinate tracer
+            let dotX = getCanvasX(temperature);
+            let dotY = getCanvasY(pressure);
+
+            ctx.save();
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = '#ef4444';
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 3.5 + Math.sin(time * 0.15) * 1.0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.restore();
+
+            // 4. Intermolecular Space digital indicator
+            let spacingY = yStart + 292;
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 8.5px sans-serif';
+            ctx.fillText("AVERAGE INTERMOLECULAR SPACING", xStart + width/2, spacingY);
+            
+            // Calculate active spacing
+            // Solid is ~3.2Å, Liquid ~4.8Å, Gas ~15Å to 24Å
+            let spaceVal = 0.0;
+            if (currentPhase === 'SOLID') {
+                spaceVal = 3.2 + Math.random() * 0.05;
+            } else if (currentPhase === 'LIQUID') {
+                spaceVal = 4.8 + Math.random() * 0.15;
+            } else if (currentPhase === 'SUPERCRITICAL') {
+                spaceVal = 5.2 + Math.random() * 0.1;
+            } else {
+                // gas scales with pressure directly
+                spaceVal = 3.8 + (100 / pressure) * 0.22;
+            }
+            
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(spaceVal.toFixed(2) + " Å (Ångström)", xStart + width/2, spacingY + 15);
+            ctx.restore();
+        }
+
+        // Master Loop
+        function updateAndRender() {
+            time++;
+
+            // Draw telemetry dashboard
+            drawTelemetry(xStart, yStart, width, height);
+
+            // Draw mechanical chamber setup (piston, cylinder, states, molecules)
+            drawApparatus();
+
+            requestAnimationFrame(updateAndRender);
+        }
+
+        // Initialize variables & start loops
+        resetLab();
+        updateAndRender();
+    </script>
+</body>
+</html>

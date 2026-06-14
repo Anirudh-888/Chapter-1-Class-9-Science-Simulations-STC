@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STC Lab - Properties of Solids Simulation</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --text-light: #f8fafc;
+            --stc-yellow: #facc15;
+            --stc-blue: #38bdf8;
+            --stc-red: #ef4444;
+            --border-ui: #475569;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .sim-card {
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-container {
+            text-align: center;
+            border-bottom: 2px solid var(--border-ui);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            background-color: #334155;
+            border: 2px solid var(--border-ui);
+            color: var(--text-light);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn:hover {
+            background-color: #475569;
+        }
+
+        .mode-btn.active {
+            background-color: var(--stc-blue);
+            border-color: #0284c7;
+            color: #0f172a;
+        }
+
+        .viewport-wrapper {
+            position: relative;
+            background-color: #020617;
+            border: 3px solid var(--border-ui);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            background-color: #020617;
+        }
+
+        .interactive-controls {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 80px;
+            justify-content: center;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .slider-input {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #475569;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+        }
+
+        .action-btn {
+            background-color: var(--stc-red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+        }
+
+        .explanation-box {
+            border-left: 4px solid var(--stc-yellow);
+            background-color: rgba(250, 204, 21, 0.1);
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .metric-badge {
+            background: #0f172a;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #34d399;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sim-card">
+        <div class="header-container">
+            <h1>Physical Characteristics of Solids</h1>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('shape')">A) Definite Shape</button>
+            <button class="mode-btn" onclick="switchMode('compress')">B) Compressibility</button>
+            <button class="mode-btn" onclick="switchMode('rigid')">C) Rigidity</button>
+        </div>
+
+        <div class="viewport-wrapper">
+            <canvas id="solidsCanvas" width="550" height="320"></canvas>
+        </div>
+
+        <div class="interactive-controls" id="controlsPanel">
+            <!-- Dynamic Controls Inserted Here Automatically -->
+        </div>
+
+        <div class="explanation-box" id="explanationText">
+            Select a property from the top menu to actively experiment with the particle structures of a solid material.
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('solidsCanvas');
+        const ctx = canvas.getContext('2d');
+        const controlsPanel = document.getElementById('controlsPanel');
+        const explanationText = document.getElementById('explanationText');
+
+        let currentMode = 'shape';
+        let particles = [];
+        let animationFrameId;
+        
+        // Simulation configuration state variables
+        let containerType = 'box'; 
+        let pistonY = 60;
+        let activeCompressionForce = 0;
+        let strikeImpactProgress = 0;
+        let isBroken = false;
+        let crackOffset = 0;
+
+        // Initialize particle grid positions mimicking structural matrix layout
+        function initSolidGrid(offsetX = 0, offsetY = 0) {
+            particles = [];
+            const rows = 7;
+            const cols = 9;
+            const spacing = 18;
+            const startX = (canvas.width / 2) - ((cols - 1) * spacing) / 2 + offsetX;
+            const startY = (canvas.height / 2) - ((rows - 1) * spacing) / 2 + 30 + offsetY;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    particles.push({
+                        origX: startX + (c * spacing),
+                        origY: startY + (r * spacing),
+                        x: startX + (c * spacing),
+                        y: startY + (r * spacing),
+                        row: r,
+                        col: c,
+                        jitterX: 0,
+                        jitterY: 0
+                    });
+                }
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Highlight current targets
+            if(mode === 'shape') event.target.classList.add('active');
+            else {
+                // Find matching button text key context fallbacks
+                const headers = ['Definite Shape', 'Compressibility', 'Rigidity'];
+                document.querySelectorAll('.mode-btn').forEach(b => {
+                    if(b.innerText.toLowerCase().includes(mode)) b.classList.add('active');
+                });
+            }
+
+            // Reset dynamic triggers
+            containerType = 'box';
+            pistonY = 60;
+            activeCompressionForce = 0;
+            strikeImpactProgress = 0;
+            isBroken = false;
+            crackOffset = 0;
+            
+            initSolidGrid();
+            renderControls();
+        }
+
+        function renderControls() {
+            if (currentMode === 'shape') {
+                controlsPanel.innerHTML = `
+                    <div class="control-row">
+                        <label><strong>Pour Solid into Container:</strong></label>
+                        <div>
+                            <button class="mode-btn ${containerType === 'box' ? 'active' : ''}" onclick="setContainer('box')">Wide Square Box</button>
+                            <button class="mode-btn ${containerType === 'bowl' ? 'active' : ''}" onclick="setContainer('bowl')">Round Bottom Beaker</button>
+                        </div>
+                    </div>
+                `;
+                explanationText.innerHTML = "<strong>Definite Shape & Fixed Volume:</strong> Notice that when moving the solid block into a completely different container, it <strong>doesn't</strong> change its boundaries or expand to fill the shape. Particles remain tightly locked!";
+            } else if (currentMode === 'compress') {
+                controlsPanel.innerHTML = `
+                    <div class="control-row">
+                        <label><strong>Push Down Piston Force:</strong></label>
+                        <input type="range" class="slider-input" id="compressSlider" min="0" max="100" value="0" oninput="handleCompression(this.value)">
+                        <span class="metric-badge" id="compressBadge">0 N</span>
+                    </div>
+                `;
+                explanationText.innerHTML = "<strong>Negligible Compressibility:</strong> Because the internal atoms are already tightly packed with minimum interstellar void space, outside force cannot squeeze the volume down.";
+            } else if (currentMode === 'rigid') {
+                controlsPanel.innerHTML = `
+                    <div class="control-row">
+                        <label><strong>Structural Integrity Action:</strong></label>
+                        <button class="action-btn" onclick="triggerHammerStrike()">Slam Hammer Force!</button>
+                    </div>
+                `;
+                explanationText.innerHTML = "<strong>Rigid Properties:</strong> Solids maintain structural shapes under normal environments. They resist subtle changes, but when subject to excessive destructive force, they <strong>break</strong> apart cleanly into smaller pieces rather than flexing or squishing.";
+            }
+        }
+
+        function setContainer(type) {
+            containerType = type;
+            renderControls();
+        }
+
+        function handleCompression(val) {
+            activeCompressionForce = parseInt(val);
+            document.getElementById('compressBadge').innerText = (val * 15) + " N";
+            // Piston moves down but stops exactly above particles
+            pistonY = 60 + (val * 0.7);
+            if (pistonY > 118) {
+                pistonY = 118; // Maximum physical boundary resistance threshold reached
+            }
+        }
+
+        function triggerHammerStrike() {
+            if(strikeImpactProgress === 0) {
+                strikeImpactProgress = 1;
+            }
+        }
+
+        function updatePhysics() {
+            particles.forEach(p => {
+                // Natural subtle thermal vibrating loop characteristic of a solid layout
+                p.jitterX = (Math.random() - 0.5) * 0.8;
+                p.jitterY = (Math.random() - 0.5) * 0.8;
+
+                if (currentMode === 'compress' && activeCompressionForce > 0) {
+                    // Under compression load, apply tighter localized stress jittering
+                    p.jitterX *= (1 + activeCompressionForce * 0.05);
+                    p.jitterY *= (1 + activeCompressionForce * 0.05);
+                }
+
+                p.x = p.origX + p.jitterX;
+                p.y = p.origY + p.jitterY;
+
+                // Handle structural breaking logic modifications
+                if (currentMode === 'rigid' && isBroken) {
+                    if (p.col <= 4) {
+                        p.x -= crackOffset;
+                    } else {
+                        p.x += crackOffset;
+                    }
+                }
+            });
+
+            // Hammer animation tracking handler
+            if (strikeImpactProgress > 0 && strikeImpactProgress < 20) {
+                strikeImpactProgress += 1;
+                if (strikeImpactProgress === 10) {
+                    isBroken = true;
+                }
+            }
+
+            if (isBroken && crackOffset < 15) {
+                crackOffset += 1;
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Mode A: Definite Shape Rendering Details
+            if (currentMode === 'shape') {
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#475569";
+                
+                if (containerType === 'box') {
+                    ctx.strokeRect(100, 100, 350, 180);
+                } else if (containerType === 'bowl') {
+                    ctx.beginPath();
+                    ctx.moveTo(100, 100);
+                    ctx.lineTo(100, 220);
+                    ctx.arc(275, 220, 175, Math.PI, 0, true);
+                    ctx.lineTo(450, 100);
+                    ctx.stroke();
+                }
+            }
+
+            // Mode B: Compressibility Piston Rendering Details
+            if (currentMode === 'compress') {
+                // Container walls
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#64748b";
+                ctx.beginPath();
+                ctx.moveTo(150, 50);
+                ctx.lineTo(150, 270);
+                ctx.lineTo(400, 270);
+                ctx.lineTo(400, 50);
+                ctx.stroke();
+
+                // Mechanical Piston Plate
+                ctx.fillStyle = "#94a3b8";
+                ctx.fillRect(154, pistonY, 242, 16);
+                
+                // Shaft
+                ctx.fillStyle = "#cbd5e1";
+                ctx.fillRect(265, 10, 20, pistonY - 10);
+
+                if(pistonY >= 118 && activeCompressionForce > 40) {
+                    ctx.fillStyle = varColor = varColor = varColor = varColor = '#ef4444';
+                    ctx.font = "bold 14px sans-serif";
+                    ctx.fillText("VOLUME FIXED - RESISTANCE 100%", 165, pistonY - 10);
+                }
+            }
+
+            // Draw Atoms/Particles Matrix
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+                
+                if (currentMode === 'rigid' && isBroken) {
+                    ctx.fillStyle = "#f87171";
+                } else {
+                    ctx.fillStyle = varColor = currentMode === 'compress' && activeCompressionForce > 50 ? "#34d399" : "#38bdf8";
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = "#0284c7";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.closePath();
+            });
+
+            // Mode C: Rigidity Hammer Animation Frame Layout Engine
+            if (currentMode === 'rigid') {
+                if (strikeImpactProgress > 0 && strikeImpactProgress < 10) {
+                    // Hammer descending animation frame calculations
+                    ctx.save();
+                    ctx.translate(canvas.width / 2, 40 + (strikeImpactProgress * 6));
+                    ctx.fillStyle = "#e2e8f0";
+                    ctx.fillRect(-25, -15, 50, 30);
+                    ctx.fillStyle = "#64748b";
+                    ctx.fillRect(-5, -60, 10, 45);
+                    ctx.restore();
+                } else if (!isBroken) {
+                    // Default resting visual indicators state
+                    ctx.save();
+                    ctx.translate(canvas.width / 2, 30);
+                    ctx.fillStyle = "#cbd5e1";
+                    ctx.fillRect(-20, -12, 40, 24);
+                    ctx.fillStyle = "#475569";
+                    ctx.fillRect(-4, -45, 8, 33);
+                    ctx.restore();
+                }
+            }
+
+            // Call cycle steps recursively
+            updatePhysics();
+            animationFrameId = requestAnimationFrame(draw);
+        }
+
+        // Start initialization configuration pipeline loops automatically
+        initSolidGrid();
+        renderControls();
+        draw();
+    </script>
+</body>
+</html>

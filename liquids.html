@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCpedia Ultimate Lab - Liquid State Physics</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #151f32;
+            --text-light: #f1f5f9;
+            --stc-yellow: #facc15;
+            --stc-cyan: #06b6d4;
+            --stc-blue: #3b82f6;
+            --stc-orange: #f97316;
+            --border-ui: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .lab-wrapper {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .navbar {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: #1e293b;
+            border: 2px solid var(--border-ui);
+            color: #94a3b8;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: #273549;
+            color: white;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--stc-blue), #1d4ed8);
+            border-color: #60a5fa;
+            color: white;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .viewport-container {
+            position: relative;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            border: 3px solid var(--border-ui);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .dashboard-controls {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--border-ui);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 90px;
+            justify-content: center;
+        }
+
+        .control-element {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .interactive-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #1e293b;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .interactive-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--stc-yellow);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid var(--border-ui);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .action-btn.selected {
+            background: var(--stc-cyan);
+            color: #020617;
+            border-color: #22d3ee;
+        }
+
+        .stcpedia-feedback {
+            border-left: 5px solid var(--stc-yellow);
+            background: linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .avatar-title {
+            font-weight: bold;
+            color: var(--stc-yellow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .speech-text {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lab-wrapper">
+        <div class="navbar">
+            <button class="nav-btn active" id="btn-shape" onclick="changeMode('shape')">1. Shape Morph</button>
+            <button class="nav-btn" id="btn-compress" onclick="changeMode('compress')">2. Pressure Press</button>
+            <button class="nav-btn" id="btn-fluid" onclick="changeMode('fluid')">3. Slosh & Tilt</button>
+        </div>
+
+        <div class="viewport-container" id="screenFrame">
+            <canvas id="liquidCanvas" width="650" height="360"></canvas>
+        </div>
+
+        <div class="dashboard-controls" id="dashboardControls">
+            </div>
+
+        <div class="stcpedia-feedback">
+            <div class="avatar-title">⚡ STCpedia Live Lab Guide:</div>
+            <div id="speakerBox" class="speech-text">Loading simulation module...</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('liquidCanvas');
+        const ctx = canvas.getContext('2d');
+        const speakerBox = document.getElementById('speakerBox');
+        const dashboardControls = document.getElementById('dashboardControls');
+        const screenFrame = document.getElementById('screenFrame');
+
+        let currentMode = 'shape';
+        let particles = [];
+        const maxParticles = 340; 
+
+        // Interactive Parameter States
+        let morphShape = 'beaker'; 
+        let hydraulicForce = 0;
+        let tiltAngle = 0;
+        let systemShake = 0;
+
+        class LiquidMolecule {
+            constructor(customX, customY) {
+                this.x = customX;
+                this.y = customY;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = Math.random() * 1.5;
+                this.radius = 5.2;
+            }
+
+            physicsEngine(leftWall, rightWall, floorY, ceilingY = 0, gravityX = 0, gravityY = 0.25) {
+                this.vx += gravityX;
+                this.vy += gravityY;
+
+                // Molecular shuffling movement
+                this.vx += (Math.random() - 0.5) * 0.2;
+                this.vy += (Math.random() - 0.5) * 0.2;
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Boundary Constraints
+                if (this.x - this.radius < leftWall) {
+                    this.x = leftWall + this.radius;
+                    this.vx *= -0.1;
+                }
+                if (this.x + this.radius > rightWall) {
+                    this.x = rightWall - this.radius;
+                    this.vx *= -0.1;
+                }
+                if (this.y + this.radius > floorY) {
+                    this.y = floorY - this.radius;
+                    this.vy *= -0.05;
+                    this.vx *= 0.75; 
+                }
+                if (ceilingY > 0 && this.y - this.radius < ceilingY) {
+                    this.y = ceilingY + this.radius;
+                    this.vy *= -0.05;
+                }
+            }
+
+            drawParticle(customCtx) {
+                customCtx.beginPath();
+                customCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                let pGradient = customCtx.createRadialGradient(this.x - 1.5, this.y - 1.5, 1, this.x, this.y, this.radius);
+                
+                if (currentMode === 'compress' && hydraulicForce > 70) {
+                    pGradient.addColorStop(0, "#ffedd5");
+                    pGradient.addColorStop(0.3, "#f97316");
+                    pGradient.addColorStop(1, "#c2410c");
+                } else {
+                    pGradient.addColorStop(0, "#e0f2fe");
+                    pGradient.addColorStop(0.4, "#38bdf8");
+                    pGradient.addColorStop(1, "#0369a1");
+                }
+                customCtx.fillStyle = pGradient;
+                customCtx.fill();
+                customCtx.closePath();
+            }
+        }
+
+        function initLiquidGrid() {
+            particles = [];
+            for (let i = 0; i < maxParticles; i++) {
+                let rx = 240 + Math.random() * 170;
+                let ry = 120 + Math.random() * 150;
+                particles.push(new LiquidMolecule(rx, ry));
+            }
+        }
+
+        function changeMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+
+            morphShape = 'beaker';
+            hydraulicForce = 0;
+            tiltAngle = 0;
+            systemShake = 0;
+            screenFrame.style.transform = "none";
+
+            initLiquidGrid();
+            renderDashboardHUD();
+        }
+
+        function renderDashboardHUD() {
+            if (currentMode === 'shape') {
+                dashboardControls.innerHTML = `
+                    <div class="control-element">
+                        <div class="control-header"><span>📦 SELECT TARGET CONTAINER SHAPE:</span></div>
+                        <div class="btn-group">
+                            <button class="action-btn ${morphShape === 'beaker' ? 'selected' : ''}" onclick="setMorph('beaker')">Graduated Beaker</button>
+                            <button class="action-btn ${morphShape === 'bowl' ? 'selected' : ''}" onclick="setMorph('bowl')">Wide Storage Bowl</button>
+                            <button class="action-btn ${morphShape === 'flask' ? 'selected' : ''}" onclick="setMorph('flask')">Conical Flask</button>
+                        </div>
+                    </div>
+                `;
+                speakerBox.innerHTML = "<strong>Watch it take the new shape!</strong> When you swap containers, the fluid instantly pours and splashes down to fill the empty floor space, perfectly adapting to the new geometry.";
+            } else if (currentMode === 'compress') {
+                dashboardControls.innerHTML = `
+                    <div class="control-element">
+                        <div class="control-header">
+                            <span>⚙️ CRANK HYDRAULIC PRESSURE VALVE:</span>
+                            <span id="forceMeter" style="color:var(--stc-orange); font-weight:bold;">0% FORCE</span>
+                        </div>
+                        <input type="range" class="interactive-slider" min="0" max="100" value="0" oninput="runCompressionTest(this.value)">
+                    </div>
+                `;
+                speakerBox.innerHTML = "<strong>Squeeze the dense volume!</strong> The piston comes down right onto the deep water pile. The machine will load up with pressure because the particles are closely packed and cannot compress closer.";
+            } else if (currentMode === 'fluid') {
+                dashboardControls.innerHTML = `
+                    <div class="control-element">
+                        <div class="control-header">
+                            <span>📐 TILT BEAKER CONTROL SLIDER:</span>
+                            <span id="angleMeter" style="color:var(--stc-cyan); font-weight:bold;">0° ROTATION</span>
+                        </div>
+                        <input type="range" class="interactive-slider" min="-45" max="45" value="0" oninput="runTiltEngine(this.value)">
+                    </div>
+                `;
+                speakerBox.innerHTML = "<strong>Watch it slosh!</strong> Tilt the slider. The entire volume shifts and re-levels itself, rushing directly into the lower corner while maintaining its 3/4 volume capacity.";
+            }
+        }
+
+        function setMorph(shape) {
+            morphShape = shape;
+            renderDashboardHUD();
+            
+            // Pouring/Splashing Effect: Shuffles particles into a stream above the container
+            // This clearly demonstrates the active process of taking the container's shape!
+            particles.forEach(p => {
+                p.x = canvas.width / 2 + (Math.random() - 0.5) * 50;
+                p.y = 40 + Math.random() * 60;
+                p.vx = (Math.random() - 0.5) * 3;
+                p.vy = 2 + Math.random() * 2;
+            });
+        }
+
+        function runCompressionTest(val) {
+            hydraulicForce = parseInt(val);
+            document.getElementById('forceMeter').innerText = (hydraulicForce * 12) + " PSI";
+            systemShake = hydraulicForce > 70 ? (hydraulicForce - 70) * 0.12 : 0;
+        }
+
+        function runTiltEngine(val) {
+            tiltAngle = parseInt(val) * (Math.PI / 180);
+            document.getElementById('angleMeter').innerText = val + "° TILT";
+        }
+
+        function resolveParticleCollisions() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    let dx = particles[j].x - particles[i].x;
+                    let dy = particles[j].y - particles[i].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    let minDist = particles[i].radius + particles[j].radius - 0.4; 
+                    
+                    if (dist < minDist) {
+                        if (dist === 0) {
+                            dx = Math.random() - 0.5;
+                            dy = Math.random() - 0.5;
+                            dist = 0.1;
+                        }
+                        let overlap = minDist - dist;
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+
+                        particles[i].x -= nx * overlap * 0.5;
+                        particles[i].y -= ny * overlap * 0.5;
+                        particles[j].x += nx * overlap * 0.5;
+                        particles[j].y += ny * overlap * 0.5;
+
+                        particles[i].vx -= nx * 0.02;
+                        particles[i].vy -= ny * 0.02;
+                        particles[j].vx += nx * 0.02;
+                        particles[j].vy += ny * 0.02;
+                    }
+                }
+            }
+        }
+
+        function updateAndRenderLab() {
+            if (systemShake > 0) {
+                let sx = (Math.random() - 0.5) * systemShake;
+                let sy = (Math.random() - 0.5) * systemShake;
+                screenFrame.style.transform = `translate(${sx}px, ${sy}px)`;
+            } else {
+                screenFrame.style.transform = "none";
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            resolveParticleCollisions();
+
+            // --- MODULE 1: SHAPE MORPH BOUNDARIES ---
+            if (currentMode === 'shape') {
+                let lWall = 210, rWall = 440, fY = 320;
+                ctx.strokeStyle = "#475569";
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+
+                if (morphShape === 'beaker') {
+                    ctx.moveTo(lWall, 110); ctx.lineTo(lWall, fY);
+                    ctx.lineTo(rWall, fY);  ctx.lineTo(rWall, 110);
+                    ctx.stroke();
+
+                    particles.forEach(p => {
+                        p.physicsEngine(lWall, rWall, fY);
+                        p.drawParticle(ctx);
+                    });
+                } else if (morphShape === 'bowl') {
+                    lWall = 130; rWall = 520;
+                    ctx.moveTo(lWall, 160); ctx.lineTo(lWall + 40, fY);
+                    ctx.lineTo(rWall - 40, fY); ctx.lineTo(rWall, 160);
+                    ctx.stroke();
+
+                    particles.forEach(p => {
+                        // Dynamic slope check along the edges of the bowl
+                        let ratio = Math.max(0, Math.min(1, (p.y - 160) / (320 - 160)));
+                        let currentLeft = 130 + 40 * ratio;
+                        let currentRight = 520 - 40 * ratio;
+
+                        p.physicsEngine(currentLeft, currentRight, fY);
+                        p.drawParticle(ctx);
+                    });
+                } else if (morphShape === 'flask') {
+                    lWall = 160; rWall = 490;
+                    ctx.moveTo(290, 110); ctx.lineTo(290, 160);
+                    ctx.lineTo(lWall, fY); ctx.lineTo(rWall, fY);
+                    ctx.lineTo(360, 160); ctx.lineTo(360, 110);
+                    ctx.stroke();
+
+                    particles.forEach(p => {
+                        // Dynamic calculation across the conical bell wall base structure
+                        let currentLeft = 290;
+                        let currentRight = 360;
+                        if (p.y >= 160) {
+                            let ratio = Math.max(0, Math.min(1, (p.y - 160) / (320 - 160)));
+                            currentLeft = 290 - 130 * ratio;
+                            currentRight = 360 + 130 * ratio;
+                        }
+                        p.physicsEngine(currentLeft, currentRight, fY);
+                        p.drawParticle(ctx);
+                    });
+                }
+            }
+
+            // --- MODULE 2: PRESSURE PRESS BOUNDARIES ---
+            if (currentMode === 'compress') {
+                let lWall = 220, rWall = 430, fY = 320;
+                ctx.strokeStyle = "#334155";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(lWall, 90, rWall - lWall, 240);
+
+                let pistonTravelY = 100 + (hydraulicForce * 0.75);
+                if (pistonTravelY > 172) pistonTravelY = 172; 
+
+                let cY = pistonTravelY + 16;
+
+                ctx.fillStyle = "#475569";
+                ctx.fillRect(lWall + 4, pistonTravelY, (rWall - lWall) - 8, 16);
+                ctx.fillStyle = "#64748b";
+                ctx.fillRect(canvas.width / 2 - 12, 20, 24, pistonTravelY - 20);
+
+                if (hydraulicForce > 75) {
+                    ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
+                    ctx.fillRect(lWall + 4, cY, (rWall - lWall) - 8, fY - cY);
+                    ctx.fillStyle = "#ef4444";
+                    ctx.font = "bold 13px sans-serif";
+                    ctx.fillText("⚠️ CRITICAL LOCK: VOLUME FIXED", lWall + 15, pistonTravelY - 10);
+                }
+
+                particles.forEach(p => {
+                    p.physicsEngine(lWall, rWall, fY, cY);
+                    p.drawParticle(ctx);
+                });
+            }
+
+            // --- MODULE 3: SLOSH & TILT BOUNDARIES ---
+            if (currentMode === 'fluid') {
+                let lWall = 210, rWall = 440, fY = 290;
+
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2 + 30);
+                ctx.rotate(tiltAngle);
+                ctx.translate(-canvas.width / 2, -(canvas.height / 2 + 30));
+
+                ctx.strokeStyle = "#475569";
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(lWall, 110); ctx.lineTo(lWall, fY);
+                ctx.lineTo(rWall, fY);  ctx.lineTo(rWall, 110);
+                ctx.stroke();
+
+                let relativeGravityX = 0.28 * Math.sin(tiltAngle);
+                let relativeGravityY = 0.28 * Math.cos(tiltAngle);
+
+                particles.forEach(p => {
+                    p.physicsEngine(lWall, rWall, fY, 0, relativeGravityX, relativeGravityY);
+                    p.drawParticle(ctx);
+                });
+
+                ctx.restore();
+            }
+
+            requestAnimationFrame(updateAndRenderLab);
+        }
+
+        // Auto-run pipeline initialization loops
+        changeMode('shape');
+        updateAndRenderLab();
+    </script>
+</body>
+</html>
